@@ -227,24 +227,51 @@ export function setupAuth(app: Express) {
     
     
     // Detectar automaticamente a URL do ambiente
-    const getBaseUrl = () => {
-      // Em produção no Replit, usar a URL do ambiente
-      if (process.env.REPLIT_DOMAINS) {
-        return `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`;
-      }
-      
-      // Fallback para desenvolvimento local
-      return process.env.APP_URL || "http://localhost:5000";
-    };
-    
-    const baseUrl = getBaseUrl();
-    const callbackUrl = `${baseUrl}/api/auth/google/callback`;
-    
-    
-    
-    
-    
-    
+    function getBaseUrl() {
+  // Render: variável automática do ambiente
+  if (process.env.RENDER_EXTERNAL_URL) {
+    return process.env.RENDER_EXTERNAL_URL
+  }
+
+  // Replit
+  if (process.env.REPLIT_DOMAINS) {
+    return `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
+  }
+
+  // Supabase: se quiser usar a URL configurada do projeto
+  if (process.env.SUPABASE_URL) {
+    return process.env.SUPABASE_URL
+  }
+
+  // Desenvolvimento local
+  return process.env.APP_URL || "http://localhost:3001"
+}
+
+export function setupAuth(app: Express) {
+  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+    const baseUrl = getBaseUrl()
+
+    // Callback do Google OAuth
+    const googleCallbackUrl = `${baseUrl}/api/auth/google/callback`
+
+    // Callback do Supabase Auth
+    const supabaseCallbackUrl = `${baseUrl}/auth/callback`
+
+    console.log("Google Callback:", googleCallbackUrl)
+    console.log("Supabase Callback:", supabaseCallbackUrl)
+
+    // Exemplo de uso no Passport GoogleStrategy
+    passport.use(new GoogleStrategy({
+      clientID: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      callbackURL: googleCallbackUrl
+    }, async (accessToken, refreshToken, profile, done) => {
+      // Aqui você trata o usuário (criar/achar no banco)
+      return done(null, profile)
+    }))
+  }
+}
+
     
     // Verificar se as credenciais do Google são válidas
     if (!process.env.GOOGLE_CLIENT_ID.includes('.googleusercontent.com')) {
