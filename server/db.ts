@@ -1,10 +1,6 @@
 import postgres from 'postgres'
 const connectionString = process.env.DATABASE_URL
 const sql = postgres(connectionString)
-
-
-import pkg from 'pg';
-const { Pool } = pkg;
 import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from "@shared/schema";
 
