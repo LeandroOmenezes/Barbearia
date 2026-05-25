@@ -183,7 +183,7 @@ async function removePasswordResetToken(token: string): Promise<void> {
 
 export { hashPassword, generatePasswordResetToken, verifyPasswordResetToken, removePasswordResetToken, sendPasswordResetEmail };
 
-export function setupAuth(app: Express) {
+function setupAuth(app: Express) {
   const sessionStore = new MemoryStore({
     checkPeriod: 86400000, // prune expired entries every 24h
   });
