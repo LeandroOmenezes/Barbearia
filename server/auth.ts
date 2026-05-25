@@ -1,5 +1,5 @@
+import { Express } from "express";
 import passport from "passport";
-import { Strategy as LocalStrategy } from "passport-local";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { Express } from "express";
 import session from "express-session";
@@ -227,7 +227,7 @@ export function setupAuth(app: Express) {
     
     
     // Detectar automaticamente a URL do ambiente
-    // 1. Deixe a função de utilidade aqui em cima (fora do if)
+    // 1. Função auxiliar sempre declarada no escopo global do arquivo
 function getBaseUrl() {
   if (process.env.APP_URL) {
     return process.env.APP_URL;
@@ -236,30 +236,42 @@ function getBaseUrl() {
     return process.env.RENDER_EXTERNAL_URL;
   }
   if (process.env.REPLIT_DOMAINS) {
-    return `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`;
+    // Garante que o protocolo https seja adicionado se não existir
+    const domain = process.env.REPLIT_DOMAINS.split(',')[0];
+    return domain.startsWith('http') ? domain : `https://${domain}`;
   }
   return "http://localhost:3001";
 }
 
+// 2. Função principal que configura a autenticação no app Express
 export function setupAuth(app: Express) {
-  // Estratégia de autenticação do Google
+  
+  // Estratégia de autenticação do Google (só ativa se as chaves existirem)
   if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     const baseUrl = getBaseUrl();
 
-    // Callback do Google OAuth e Supabase
+    // Definição das URLs de retorno (Callbacks)
     const googleCallbackUrl = `${baseUrl}/api/auth/google/callback`;
     const supabaseCallbackUrl = `${baseUrl}/auth/callback`;
 
-    console.log("Google Callback:", googleCallbackUrl);
-    console.log("Supabase Callback:", supabaseCallbackUrl);
+    console.log("Google Callback URL configurada:", googleCallbackUrl);
+    console.log("Supabase Callback URL configurada:", supabaseCallbackUrl);
 
-    passport.use(new GoogleStrategy({
-      clientID: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      callbackURL: googleCallbackUrl
-    }, async (accessToken, refreshToken, profile, done) => {
-      return done(null, profile);
-    }));
+    passport.use(
+      new GoogleStrategy(
+        {
+          clientID: process.env.GOOGLE_CLIENT_ID,
+          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+          callbackURL: googleCallbackUrl,
+        },
+        async (accessToken, refreshToken, profile, done) => {
+          // Aqui entra a sua lógica de salvar/buscar o usuário no banco de dados
+          return done(null, profile);
+        }
+      )
+    );
+  } else {
+    console.log("Aviso: Google OAuth não configurado (Credenciais ausentes no .env)");
   }
 }
 
