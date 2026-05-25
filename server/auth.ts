@@ -243,7 +243,7 @@ function getBaseUrl() {
 }
 
 // 2. Função principal que configura a autenticação no app Express
-export function setupAuth(app: Express) {
+    function setupAuth(app: Express) {
   
   // Estratégia de autenticação do Google (só ativa se as chaves existirem)
   if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
@@ -478,5 +478,8 @@ export function setupAuth(app: Express) {
     );
   }
   
-  // Rotas de reset password implementadas em routes.ts
+ // Rotas de reset password implementadas em routes.ts
 }
+
+export { setupAuth };
+
