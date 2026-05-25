@@ -68,7 +68,13 @@ app.use((req, res, next) => {
   }, async () => {
     log(`serving on port ${port}`);
     
-    // Migração de imagens concluída com sucesso!
-    // Todas as imagens agora estão permanentemente no PostgreSQL
+    // Executa a migração para salvar as imagens no seu novo banco do Supabase
+    try {
+      log("Iniciando migração de imagens para o Supabase...");
+      await migrateImagesToBase64();
+      log("Migração de imagens concluída com sucesso no Supabase!");
+    } catch (err) {
+      log(`Erro durante a migração de imagens: ${err}`);
+    }
   });
 })();
