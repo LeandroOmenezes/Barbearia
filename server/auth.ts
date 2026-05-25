@@ -326,9 +326,10 @@ function setupAuth(app: Express) {
         {
           clientID: process.env.GOOGLE_CLIENT_ID,
           clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-          callbackURL: callbackUrl,
+          callbackURL: googleCallbackUrl, // <--- ALTERADO AQUI
           scope: ['profile', 'email']
         },
+
         async (accessToken, refreshToken, profile, done) => {
           try {
             
