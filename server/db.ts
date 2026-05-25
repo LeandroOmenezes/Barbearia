@@ -1,3 +1,8 @@
+import postgres from 'postgres'
+const connectionString = process.env.DATABASE_URL
+const sql = postgres(connectionString)
+
+
 import pkg from 'pg';
 const { Pool } = pkg;
 import { drizzle } from 'drizzle-orm/node-postgres';
@@ -8,6 +13,9 @@ if (!process.env.DATABASE_URL) {
     "DATABASE_URL must be set. Did you forget to provision a database?",
   );
 }
+
+export default sql
+
 
 // Configuração do pool de conexões compatível com o Supabase
 export const pool = new Pool({ 
