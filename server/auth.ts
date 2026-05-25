@@ -226,7 +226,9 @@ function setupAuth(app: Express) {
     
     
     // Detectar automaticamente a URL do ambiente
-    // 1. Função auxiliar sempre declarada no escopo global do arquivo
+    const MemoryStore = createMemoryStore(session);
+
+// 1. Função auxiliar declarada no escopo global
 function getBaseUrl() {
   if (process.env.APP_URL) {
     return process.env.APP_URL;
@@ -235,26 +237,40 @@ function getBaseUrl() {
     return process.env.RENDER_EXTERNAL_URL;
   }
   if (process.env.REPLIT_DOMAINS) {
-    // Garante que o protocolo https seja adicionado se não existir
     const domain = process.env.REPLIT_DOMAINS.split(',')[0];
     return domain.startsWith('http') ? domain : `https://${domain}`;
   }
   return "http://localhost:3001";
 }
 
-// 2. Função principal que configura a autenticação no app Express
+// 2. Função principal que configura a autenticação
 function setupAuth(app: Express) {
-  
-  // Estratégia de autenticação do Google (só ativa se as chaves existirem)
+  const sessionStore = new MemoryStore({
+    checkPeriod: 86400000, // prune expired entries every 24h
+  });
+
+  app.use(
+    session({
+      secret: process.env.SESSION_SECRET || "barbearia-secret-key",
+      resave: false,
+      saveUninitialized: false,
+      store: sessionStore,
+      cookie: {
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      },
+    })
+  );
+
+  app.use(passport.initialize());
+  app.use(passport.session());
+
+  // Configuração da estratégia do Google OAuth
   if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     const baseUrl = getBaseUrl();
-
-    // Definição das URLs de retorno (Callbacks)
     const googleCallbackUrl = `${baseUrl}/api/auth/google/callback`;
-    const supabaseCallbackUrl = `${baseUrl}/auth/callback`;
 
     console.log("Google Callback URL configurada:", googleCallbackUrl);
-    console.log("Supabase Callback URL configurada:", supabaseCallbackUrl);
 
     passport.use(
       new GoogleStrategy(
@@ -264,15 +280,42 @@ function setupAuth(app: Express) {
           callbackURL: googleCallbackUrl,
         },
         async (accessToken, refreshToken, profile, done) => {
-          return done(null, profile);
+          try {
+            // Lógica padrão de persistência de usuário
+            const email = profile.emails?.[0]?.value;
+            if (!email) return done(new Error("No email found"));
+
+            let user = await storage.getUserByUsername(email);
+            if (!user) {
+              user = await storage.createUser({
+                username: email,
+                password: "oauth-generated-password",
+                name: profile.displayName,
+                isAdmin: false,
+              });
+            }
+            return done(null, user);
+          } catch (err) {
+            return done(err);
+          }
         }
       )
     );
-  } else {
-    console.log("Aviso: Google OAuth não configurado (Credenciais ausentes no .env)");
   }
-}
 
+  passport.serializeUser((user: any, done) => {
+    done(null, user.id);
+  });
+
+  passport.deserializeUser(async (id: number, done) => {
+    try {
+      const user = await storage.getUser(id);
+      done(null, user);
+    } catch (err) {
+      done(err);
+    }
+  });
+}
     
     // Verificar se as credenciais do Google são válidas
     if (!process.env.GOOGLE_CLIENT_ID.includes('.googleusercontent.com')) {
