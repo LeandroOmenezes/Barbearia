@@ -1,15 +1,14 @@
 import { Express } from "express";
+import session from "express-session";
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-import { Express } from "express";
-import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
-import { storage } from "./storage";
-import { User as UserType } from "@shared/schema";
 import createMemoryStore from "memorystore";
 import nodemailer from "nodemailer";
 import { MailService } from '@sendgrid/mail';
+import { storage } from "./storage";
+import { User as UserType } from "@shared/schema";
 
 const MemoryStore = createMemoryStore(session);
 
