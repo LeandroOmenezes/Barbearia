@@ -320,9 +320,10 @@ function setupAuth(app: Express) {
     // Verificar se as credenciais do Google são válidas
     if (!process.env.GOOGLE_CLIENT_ID.includes('.googleusercontent.com')) {
     }
-    
-        const googleCallbackUrl = `${getBaseUrl()}/api/auth/google/callback`; 
-    passport.use(
+
+  const googleCallbackUrl = `${getBaseUrl()}/api/auth/google/callback`;
+   
+  passport.use(
       new GoogleStrategy(
         {
           clientID: process.env.GOOGLE_CLIENT_ID,
