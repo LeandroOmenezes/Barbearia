@@ -243,7 +243,7 @@ function getBaseUrl() {
 }
 
 // 2. Função principal que configura a autenticação no app Express
-    function setupAuth(app: Express) {
+function setupAuth(app: Express) {
   
   // Estratégia de autenticação do Google (só ativa se as chaves existirem)
   if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
@@ -264,7 +264,6 @@ function getBaseUrl() {
           callbackURL: googleCallbackUrl,
         },
         async (accessToken, refreshToken, profile, done) => {
-          // Aqui entra a sua lógica de salvar/buscar o usuário no banco de dados
           return done(null, profile);
         }
       )
