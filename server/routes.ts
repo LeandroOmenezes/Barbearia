@@ -558,6 +558,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return slots;
       };
       
+      const allTimeSlots = generateTimeSlots();
+      
       // Buscar agendamentos existentes para a data (filtrados por profissional se informado)
       const existingAppointments = await storage.getAppointments();
       const bookedTimes = existingAppointments
