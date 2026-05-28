@@ -541,35 +541,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const date = req.params.date;
       const professionalId = req.query.professionalId ? parseInt(req.query.professionalId as string) : null;
       
-    // Gerar todos os horários possíveis (intervalo de 60 minutos)
-  const generateTimeSlots = () => {
-  const slots = [];
-  const startTime = 8 * 60;  // 08:00
-  const endTime = 19 * 60;   // 19:00
-  const interval = 60;       // Intervalo entre as vagas (60 minutos)
-  
-    // CONFIGURAÇÃO DO ALMOÇO (em minutos)
-  const lunchStart = 12 * 60; // 12:00
-  const lunchEnd = 13 * 60;   // 13:00
-
-  for (let time = startTime; time < endTime; time += interval) {
-    // IGNORA O HORÁRIO SE ELE ESTIVER DENTRO DO JALMOÇO
-    // Se a vaga começa antes do fim do almoço E termina depois do início do almoço
-    if (time >= lunchStart && time < lunchEnd) {
-      continue; // Pula para o próximo horário
-    }
-
-    const hour = Math.floor(time / 60);
-    const minute = time % 60;
-    const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-    slots.push(timeString);
-  }
-  
-  return slots;
-};
-
-const allTimeSlots = generateTimeSlots();
-
+    // Gerar todos os horários possíveis (intervalo de 30 minutos)
+      const generateTimeSlots = () => {
+        const slots = [];
+        const startTime = 8 * 60; // 08:00 em minutos (540 minutos)
+        const endTime = 19 * 60; // 19:00 em minutos (1140 minutos)
+        const interval = 30; // 30 minutos
+        
+        for (let time = startTime; time < endTime; time += interval) {
+          const hour = Math.floor(time / 60);
+          const minute = time % 60;
+          const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+          slots.push(timeString);
+        }
+        
+        return slots;
+      };
       
       // Buscar agendamentos existentes para a data (filtrados por profissional se informado)
       const existingAppointments = await storage.getAppointments();
