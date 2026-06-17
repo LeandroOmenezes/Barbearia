@@ -6,8 +6,5 @@ vite.config.ts.*
 *.tar.gz
 .env
 backup.sql
-<<<<<<< HEAD
 .config
 .local
-=======
->>>>>>> b115e94711671d0186ecca4d3725538ca8802811
