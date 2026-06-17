@@ -112,19 +112,25 @@ export function setupAuth(app: Express) {
   if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     
     
-    // Detectar automaticamente a URL do ambiente
-    const getBaseUrl = () => {
-      // Em produção no Replit, usar a URL do ambiente
-      if (process.env.REPLIT_DOMAINS) {
-        return `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`;
-      }
-      
-      // Fallback para desenvolvimento local
-      return process.env.APP_URL || "http://localhost:5000";
-    };
-    
-    const baseUrl = getBaseUrl();
-    const callbackUrl = `${baseUrl}/api/auth/google/callback`;
+    // Detectar automaticamente a URL do ambiente (Render, Replit ou Local)
+const getBaseUrl = () => {
+  // Em produção no Render
+  if (process.env.RENDER_EXTERNAL_URL) {
+    return process.env.RENDER_EXTERNAL_URL;
+  }
+
+  // Em produção no Replit
+  if (process.env.REPLIT_DOMAINS) {
+    return `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`;
+  }
+  
+  // Fallback para desenvolvimento local
+  return process.env.APP_URL || "http://localhost:5000";
+};
+
+const baseUrl = getBaseUrl();
+const callbackUrl = `${baseUrl}/api/auth/google/callback`;
+
     
     
     
