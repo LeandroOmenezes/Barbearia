@@ -112,21 +112,23 @@ export function setupAuth(app: Express) {
   if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     
     
-    // Detectar automaticamente a URL do ambiente (Render, Replit ou Local)
+// Detectar automaticamente a URL do ambiente (Render, Replit ou Local)
 const getBaseUrl = () => {
   let url = "http://localhost:5000";
 
-  // Em produção no Render
-  if (process.env.RENDER_EXTERNAL_URL) {
-    url = process.env.RENDER_EXTERNAL_URL;
-  }
-  // Em produção no Replit
-  else if (process.env.REPLIT_DOMAINS) {
-    url = `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`;
-  }
-  // Fallback para desenvolvimento local
-  else if (process.env.APP_URL) {
-    url = process.env.APP_URL;
+  // Verifica se estamos em ambiente Node.js (Backend) antes de acessar process.env
+  if (typeof process !== 'undefined' && process.env) {
+    if (process.env.RENDER_EXTERNAL_URL) {
+      url = process.env.RENDER_EXTERNAL_URL;
+    } 
+    else if (process.env.REPLIT_DOMAINS) {
+      // Replit fornece apenas o domínio (ex: antigo.repl.co ou replit.app), precisa do https://
+      const domain = process.env.REPLIT_DOMAINS.split(',')[0];
+      url = domain.startsWith('http') ? domain : `https://${domain}`;
+    } 
+    else if (process.env.APP_URL) {
+      url = process.env.APP_URL;
+    }
   }
 
   // Remove a barra do final se ela existir para evitar dupla barra (//)
@@ -136,7 +138,6 @@ const getBaseUrl = () => {
 const baseUrl = getBaseUrl();
 const callbackUrl = `${baseUrl}/api/auth/google/callback`;
 
-    
     
     // Verificar se as credenciais do Google são válidas
     if (!process.env.GOOGLE_CLIENT_ID.includes('.googleusercontent.com')) {
