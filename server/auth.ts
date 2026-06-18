@@ -114,28 +114,28 @@ export function setupAuth(app: Express) {
     
     // Detectar automaticamente a URL do ambiente (Render, Replit ou Local)
 const getBaseUrl = () => {
+  let url = "http://localhost:5000";
+
   // Em produção no Render
   if (process.env.RENDER_EXTERNAL_URL) {
-    return process.env.RENDER_EXTERNAL_URL;
+    url = process.env.RENDER_EXTERNAL_URL;
+  }
+  // Em produção no Replit
+  else if (process.env.REPLIT_DOMAINS) {
+    url = `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`;
+  }
+  // Fallback para desenvolvimento local
+  else if (process.env.APP_URL) {
+    url = process.env.APP_URL;
   }
 
-  // Em produção no Replit
-  if (process.env.REPLIT_DOMAINS) {
-    return `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`;
-  }
-  
-  // Fallback para desenvolvimento local
-  return process.env.APP_URL || "http://localhost:5000";
+  // Remove a barra do final se ela existir para evitar dupla barra (//)
+  return url.endsWith('/') ? url.slice(0, -1) : url;
 };
 
 const baseUrl = getBaseUrl();
 const callbackUrl = `${baseUrl}/api/auth/google/callback`;
 
-    
-    
-    
-    
-    
     
     
     // Verificar se as credenciais do Google são válidas
