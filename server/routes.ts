@@ -939,7 +939,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/users", async (req: Request, res: Response) => {
     try {
-      if (!req.isAuthenticated() || !req.user?.isMaster) {
+      if (!req.isAuthenticated() || (!req.user?.isMaster && !req.user?.isAdmin)) {
         return res.status(403).json({ message: "Access denied" });
       }
       
@@ -995,7 +995,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/admin/users/:id", async (req: Request, res: Response) => {
     try {
-      if (!req.isAuthenticated() || !req.user?.isMaster) {
+      if (!req.isAuthenticated() || (!req.user?.isMaster && !req.user?.isAdmin)) {
         return res.status(403).json({ message: "Access denied" });
       }
       

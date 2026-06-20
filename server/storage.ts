@@ -123,9 +123,9 @@ export interface IStorage {
   toggleLikeComment(
     commentId: number,
     userId: number,
-    likeType: 'heart',
+    likeType: 'heart' | 'thumbs',
   ): Promise<{ comment: ReviewComment; userLiked: boolean } | undefined>;
-  getUserCommentLikes(userId: number): Promise<{heartLikes: number[]}>;
+  getUserCommentLikes(userId: number): Promise<{heartLikes: number[]; thumbsLikes: number[]}>;
 
   // Sales
   getSales(): Promise<Sale[]>;
@@ -1452,7 +1452,7 @@ export class DatabaseStorage implements IStorage {
     return newComment;
   }
 
-  async toggleLikeComment(commentId: number, userId: number, likeType: 'heart'): Promise<{ comment: ReviewComment; userLiked: boolean } | undefined> {
+  async toggleLikeComment(commentId: number, userId: number, likeType: 'heart' | 'thumbs'): Promise<{ comment: ReviewComment; userLiked: boolean } | undefined> {
     const existingLike = await db.select().from(commentLikes)
       .where(and(
         eq(commentLikes.commentId, commentId),
@@ -1501,7 +1501,7 @@ export class DatabaseStorage implements IStorage {
     return { comment, userLiked };
   }
 
-  async getUserCommentLikes(userId: number): Promise<{heartLikes: number[]}> {
+  async getUserCommentLikes(userId: number): Promise<{heartLikes: number[]; thumbsLikes: number[]}> {
     const allLikes = await db.select({ 
       commentId: commentLikes.commentId, 
       likeType: commentLikes.likeType 
@@ -1513,7 +1513,11 @@ export class DatabaseStorage implements IStorage {
       .filter(like => like.likeType === 'heart')
       .map(like => like.commentId);
     
-    return { heartLikes };
+    const thumbsLikes = allLikes
+      .filter(like => like.likeType === 'thumbs')
+      .map(like => like.commentId);
+    
+    return { heartLikes, thumbsLikes };
   }
 
   // Sales
