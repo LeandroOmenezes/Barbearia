@@ -288,6 +288,9 @@ export default function ClientList() {
             <div className="grid w-full items-center gap-1.5">
               <label className="text-sm font-medium">Telefone *</label>
               <Input
+                type="tel"
+                inputMode="numeric"
+                maxLength={15}
                 value={newClient.phone}
                 onChange={(e) => setNewClient({...newClient, phone: maskPhone(e.target.value)})}
                 placeholder="(00) 00000-0000"
@@ -345,6 +348,9 @@ export default function ClientList() {
             <div className="grid w-full items-center gap-1.5">
               <label className="text-sm font-medium">Telefone *</label>
               <Input
+                type="tel"
+                inputMode="numeric"
+                maxLength={15}
                 value={editingClient.phone}
                 onChange={(e) => setEditingClient({...editingClient, phone: maskPhone(e.target.value)})}
                 placeholder="(00) 00000-0000"
