@@ -5,26 +5,27 @@
 1. [Visão Geral do Sistema](#visão-geral-do-sistema)
 2. [Arquitetura Técnica](#arquitetura-técnica)
 3. [Funcionalidades Principais](#funcionalidades-principais)
-4. [Manual do Usuário](#manual-do-usuário)
-5. [Manual do Administrador](#manual-do-administrador)
-6. [Configuração e Deployment](#configuração-e-deployment)
-7. [Troubleshooting](#troubleshooting)
-8. [Histórico de Atualizações](#histórico-de-atualizações)
+4. [Público-alvo e Perfis de Acesso](#público-alvo-e-perfis-de-acesso)
+5. [Manual do Usuário](#manual-do-usuário)
+6. [Manual do Administrador](#manual-do-administrador)
+7. [API e Rotas Principais](#api-e-rotas-principais)
+8. [Configuração e Deployment](#configuração-e-deployment)
+9. [Troubleshooting](#troubleshooting)
+10. [Histórico de Atualizações](#histórico-de-atualizações)
 
 ---
 
 ## Visão Geral do Sistema
 
 ### Objetivo
-O **Ateliê de Beleza** é um sistema completo de gestão para salões de beleza que oferece uma experiência digital moderna tanto para clientes quanto para administradores. O sistema facilita o agendamento de serviços, gestão de clientes, controle de vendas e personalização completa da marca.
+O **Ateliê de Beleza** é um sistema completo de gestão para salões de beleza, oferecendo controle de agendamentos, vendas, clientes, profissionais e personalização do site.
 
-### Características Principais
-- **Interface Responsiva**: Funciona perfeitamente em desktop, tablet e mobile
-- **Autenticação Segura**: Login local e integração com Google OAuth
-- **Gestão Completa**: Agendamentos, clientes, serviços, preços e vendas
-- **Personalização Total**: Logo, cores, banner, rodapé e conteúdo personalizáveis
-- **Recuperação de Senha**: Sistema de reset via email
-- **Avaliações e Feedback**: Sistema de reviews com curtidas
+### Benefícios
+- Gestão completa de serviços e agenda
+- Interface moderna e responsiva
+- Controle de usuários administrativos
+- Relatórios financeiros integrados
+- Personalização visual do site
 
 ---
 
@@ -33,271 +34,352 @@ O **Ateliê de Beleza** é um sistema completo de gestão para salões de beleza
 ### Stack Tecnológico
 
 #### Frontend
-- **React 18** com TypeScript
-- **Tailwind CSS** para estilização
-- **Radix UI** componentes acessíveis
-- **Wouter** para roteamento
-- **TanStack React Query** para gerenciamento de estado do servidor
-- **React Hook Form + Zod** para formulários e validação
-- **Vite** como build tool
+- React 18 com TypeScript
+- Vite como bundler
+- Tailwind CSS para estilo
+- Radix UI para componentes
+- Wouter para roteamento
+- React Query para cache e requisições
+- React Hook Form + Zod para formulários e validação
 
 #### Backend
-- **Node.js** com TypeScript
-- **Express.js** framework web
-- **Passport.js** para autenticação
-- **PostgreSQL** banco de dados
-- **Drizzle ORM** para operações de banco
-- **Nodemailer** para envio de emails
+- Node.js com TypeScript
+- Express.js para API
+- Passport.js para autenticação
+- PostgreSQL para persistência
+- Drizzle ORM para queries
+- Nodemailer para envio de email
 
 #### Infraestrutura
-- **Replit** para hospedagem
-- **Neon Database** PostgreSQL serverless
-- **Base64** para armazenamento de imagens no banco
+- Replit para deployment
+- Neon Database para PostgreSQL serverless
+- Armazenamento de imagens em Base64 no banco
 
 ### Estrutura de Pastas
 ```
-├── client/                 # Frontend React
+├── client/
 │   ├── src/
-│   │   ├── components/     # Componentes reutilizáveis
-│   │   ├── pages/         # Páginas da aplicação
-│   │   ├── hooks/         # Hooks customizados
-│   │   └── lib/           # Utilitários e configurações
-├── server/                # Backend Express
-│   ├── auth.ts           # Sistema de autenticação
-│   ├── routes.ts         # Rotas da API
-│   ├── db.ts             # Configuração do banco
-│   └── storage.ts        # Interface de armazenamento
-├── shared/               # Código compartilhado
-│   └── schema.ts         # Schemas e tipos TypeScript
-└── uploads/              # Diretório para arquivos (legacy)
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── hooks/
+│   │   └── lib/
+├── server/
+│   ├── auth.ts
+│   ├── routes.ts
+│   ├── db.ts
+│   └── storage.ts
+├── shared/
+│   └── schema.ts
+└── uploads/
 ```
 
 ---
 
 ## Funcionalidades Principais
 
-### 1. Sistema de Autenticação
-- **Login Local**: Email/senha com hash seguro
-- **Google OAuth**: Integração completa com Google
-- **Recuperação de Senha**: Email com token temporário
-- **Sessões Seguras**: Cookies com expiração automática
+### Autenticação
+- Login local com email/senha
+- Login com Google OAuth
+- Recuperação de senha por email
+- Edição de telefone e foto de perfil
+- Sessões seguras com cookies
 
-### 2. Gestão de Agendamentos
-- **Calendário Inteligente**: Horários de 40 em 40 minutos
-- **Status Dinâmico**: Pendente, Confirmado, Realizado, Cancelado
-- **Prevenção de Conflitos**: Impossível agendar horários ocupados
-- **Notificações Visuais**: Cores e ícones para cada status
+### Agendamentos
+- Horários de 40 minutos
+- Agendamento por data e profissional
+- Prevenção de conflitos de horário
+- Alteração de status de agendamento
+- Bloqueio de horários para férias ou manutenções
 
-### 3. Catálogo de Serviços
-- **Categorização**: Serviços organizados por categorias
-- **Imagens Personalizadas**: Upload e gerenciamento de fotos
-- **Preços Flexíveis**: Faixas de preço min/max
-- **Serviços em Destaque**: Sistema de promoção
+### Clientes
+- Cadastro e edição de clientes no painel
+- Telefone formatado automaticamente
+- Histórico de agendamentos por cliente
+- Exclusão de clientes
 
-### 4. Gestão de Clientes
-- **Perfis Completos**: Dados pessoais e histórico
-- **Histórico de Agendamentos**: Visualização completa
-- **Estatísticas Pessoais**: Dashboards individuais
+### Profissionais
+- Cadastro por categoria
+- Vinculação de login profissional
+- Ativar/desativar profissionais
+- Upload de foto de profissional
+- Configuração de horário de almoço
 
-### 5. Sistema de Avaliações
-- **Reviews Públicos**: Clientes podem avaliar serviços
-- **Sistema de Curtidas**: Interação social
-- **Moderação**: Controle administrativo
+### Serviços e Categorias
+- Cadastro de serviços com imagem
+- Marcação de serviço em destaque
+- Gestão de categorias separada
+- Exclusão de serviços e categorias
 
-### 6. Personalização da Marca
-- **Logo Personalizada**: Upload e exibição automática
-- **Cores da Marca**: Seletor de cores dinâmico
-- **Banner Principal**: Imagem e textos customizáveis
-- **Rodapé Completo**: Contatos e redes sociais
-- **Tabela de Preços**: Gestão completa de preços
+### Preços
+- Cadastro de itens de preço
+- Faixa mínima e máxima
+- Edição e remoção de preços
+
+### Usuários Administrativos
+- Criação de usuários Admin
+- Exclusão de usuários
+- Permissões Master/Admin
+- Acesso ao painel administrativo
+
+### Avaliações e Interações
+- Publicação de reviews por clientes
+- Curtidas em reviews e comentários
+- Tipos de like: heart e thumbs
+- Exibição pública de avaliações
+
+### Personalização do Site
+- Configuração de nome, slogan e cor principal
+- Upload de logo e imagem de agendamento
+- Configuração de rodapé com contato e redes sociais
+- Personalização de banner e CTA
+
+### Vendas e Relatórios
+- Registro manual de vendas
+- Relatórios financeiros por período
+- Histórico de vendas no dashboard
+
+---
+
+## Público-alvo e Perfis de Acesso
+
+### Cliente
+- Acesso à página pública e perfil
+- Agenda serviços
+- Visualiza histórico
+- Avalia serviços
+
+### Profissional
+- Visualiza agendamentos próprios
+- Marca atendimentos como vistos
+- Recebe agenda vinculada ao seu perfil
+
+### Admin
+- Acessa painel administrativo
+- Gerencia clientes, serviços, categorias, preços e profissionais
+- Controla agendamentos e vendas
+
+### Master
+- Todas as permissões de Admin
+- Cria e exclui outros usuários
+- Controla permissões de Master
 
 ---
 
 ## Manual do Usuário
 
-### Criando uma Conta
-1. Acesse a página inicial
-2. Clique em "Entrar" no menu
-3. Selecione "Criar Conta"
-4. Preencha: nome, email e senha
-5. Confirme o email se necessário
+### Criar Conta
+1. Acesse a página de login
+2. Clique em cadastrar
+3. Preencha nome, email, telefone e senha
+4. Envie o formulário
 
-### Fazendo Login
-**Opção 1 - Login Local:**
-1. Clique em "Entrar"
-2. Digite email e senha
-3. Clique em "Entrar"
+### Login
+- Com email e senha
+- Ou com Google OAuth
 
-**Opção 2 - Google:**
-1. Clique em "Continuar com Google"
-2. Autorize a aplicação
-3. Redirecionamento automático
-
-### Agendando um Serviço
-1. Navegue pelos serviços na página inicial
-2. Clique em "Agendar" no serviço desejado
-3. Preencha o formulário:
-   - Nome completo
-   - Email de contato
-   - Selecione a data
-   - Escolha um horário disponível (verde)
-   - Adicione observações se necessário
+### Agendar Serviço
+1. Escolha serviço na home
+2. Selecione data e horário
+3. Preencha dados do cliente
 4. Confirme o agendamento
 
-### Visualizando Agendamentos
-1. Faça login na sua conta
-2. Clique no ícone de usuário no header
-3. Acesse "Perfil"
-4. Visualize seus agendamentos e estatísticas
+### Ver Agendamentos
+1. Faça login
+2. Vá ao perfil
+3. Veja agendamentos e status
 
-### Avaliando Serviços
-1. Acesse a seção "Avaliações" na página inicial
-2. Clique em "Deixar Avaliação"
-3. Preencha: nome, nota (1-5 estrelas) e comentário
-4. Envie a avaliação
-5. Curta avaliações de outros clientes
+### Avaliar Serviço
+1. Acesse avaliações
+2. Preencha nome, nota e comentário
+3. Envie avaliação
+4. Curta reviews
 
 ---
 
 ## Manual do Administrador
 
-### Acessando o Painel Admin
-**Credenciais Padrão:**
-- Email: `lleandro.m32@gmail.com`
-- Senha: `admin123`
+### Acesso ao Dashboard
+- Login com conta Admin ou Master
+- Navegação por abas
+- Painel com agendamentos, clientes, vendas, profissionais e usuários
 
-### Menu Administrativo
-O administrador tem acesso a um menu hambúrguer especial com:
-- Dashboard
-- Gestão de Agendamentos
-- Clientes e Vendas
-- Gestão de Imagens
-- Configurações do Site
+### Agendamentos
+- Ver todos os agendamentos
+- Filtrar por status ou profissional
+- Atualizar status
+- Cancelar agendamentos
 
-### Gerenciando Agendamentos
-1. Acesse "Dashboard" no menu admin
-2. Visualize todos os agendamentos
-3. Filtre por status se necessário
-4. Altere status: Pendente → Confirmado → Realizado
-5. Cancele agendamentos se necessário
+### Clientes
+- Adicionar, editar e excluir clientes
+- Telefone com máscara automática
+- Search e listagem completa
 
-### Gestão de Serviços
-**Criando Novo Serviço:**
-1. Menu Admin → "Gestão de Imagens"
-2. Clique em "Adicionar Novo Serviço"
-3. Preencha: nome, descrição, preços, categoria, ícone
-4. Faça upload de imagem personalizada
-5. Defina se é serviço em destaque
+### Profissionais
+- Criar e editar profissionais
+- Vincular usuário ao profissional
+- Ativar ou desativar
+- Upload de foto
 
-**Editando Serviço:**
-1. Localize o serviço na lista
-2. Clique em "Editar"
-3. Modifique os campos necessários
-4. Salve as alterações
+### Serviços
+- Adicionar serviço com imagem
+- Marcar serviço como destaque
+- Editar e excluir serviços
 
-**Upload de Imagens:**
-1. Clique em "Escolher Imagem"
-2. Selecione arquivo (JPG, PNG, WebP até 5MB)
-3. Visualize o preview
-4. Confirme o upload
+### Categorias
+- Criar, editar e deletar categorias
+- Organizar serviços por categoria
 
-### Gestão de Categorias
-1. Menu Admin → "Categorias"
-2. **Criar**: Nome, ícone FontAwesome
-3. **Editar**: Modificar informações
-4. **Remover**: Remove categoria e todos serviços/preços relacionados
+### Preços
+- Adicionar itens de preço
+- Definir valores mínimo e máximo
+- Excluir itens
 
-### Tabela de Preços
-1. Menu Admin → "Preços"
-2. **Adicionar**: Nome do item, preços min/max, categoria
-3. **Editar**: Clique no item para edição inline
-4. **Remover**: Exclui item da tabela
+### Usuários do Sistema
+- Criar usuários Admin
+- Excluir usuários
+- Promover e demitir Master
+- Salvar permissões de acesso
 
-### Personalização do Site
-**Configurações Gerais:**
-1. Menu Admin → "Configurações do Site"
-2. Modifique: nome do site, slogan, cor primária
-3. Upload de logo personalizada
-4. Visualize mudanças em tempo real
+### Configuração do Site
+- Alterar nome, slogan e cor principal
+- Upload de logo
+- Configurar links de redes sociais
+- Atualizar informações de contato no rodapé
 
-**Banner Principal:**
-1. Menu Admin → "Banner"
-2. Edite: título, subtítulo, texto do botão, link
-3. Upload de imagem de fundo
-4. Preview instantâneo
+### Banner
+- Personalizar título, descrição e botão
+- Upload de imagem de fundo
+- Link de CTA configurável
 
-**Rodapé:**
-1. Menu Admin → "Rodapé"
-2. Configure: dados do negócio, contatos, redes sociais
-3. URLs opcionais para redes sociais
-4. Informações de funcionamento
+### Vendas e Relatórios
+- Registrar vendas no painel
+- Consultar relatórios por período
+- Visualizar receita e desempenho
 
-### Gestão de Vendas
-1. Menu Admin → "Clientes e Vendas"
-2. **Registrar Venda**: Cliente, serviço, valor, forma de pagamento
-3. **Filtrar Vendas**: Por período, cliente ou serviço
-4. **Relatórios**: Visualização de faturamento
+---
 
-### Criando Usuários Admin
-1. Menu Admin → "Usuários"
-2. Preencha dados do novo administrador
-3. Marque "É Administrador"
-4. Defina senha temporária
+## API e Rotas Principais
+
+### Autenticação
+- `POST /api/forgot-password`
+- `GET /api/reset-password/:token`
+- `POST /api/reset-password/:token`
+
+### Clientes
+- `GET /api/clients`
+- `POST /api/clients`
+- `PATCH /api/clients/:id`
+- `DELETE /api/clients/:id`
+
+### Serviços e Categorias
+- `GET /api/categories`
+- `GET /api/services/all`
+- `GET /api/services/featured`
+- `GET /api/services/:categoryId`
+- `POST /api/admin/services`
+- `PUT /api/admin/services/:id`
+- `PATCH /api/admin/services/:id/featured`
+- `DELETE /api/admin/services/:id`
+- `POST /api/admin/categories`
+- `PUT /api/admin/categories/:id`
+- `DELETE /api/admin/categories/:id`
+
+### Preços
+- `GET /api/prices`
+- `GET /api/prices/:categoryId`
+- `POST /api/admin/prices`
+- `PUT /api/admin/prices/:id`
+- `DELETE /api/admin/prices/:id`
+
+### Agendamentos
+- `GET /api/appointments/available-times/:date`
+- `POST /api/appointments`
+- `GET /api/appointments`
+- `GET /api/my-appointments`
+- `PATCH /api/appointments/:id/status`
+
+### Profissionais
+- `GET /api/professionals`
+- `GET /api/professionals/category/:categoryId`
+- `POST /api/admin/professionals`
+- `PUT /api/admin/professionals/:id`
+- `PATCH /api/admin/professionals/:id/active`
+- `DELETE /api/admin/professionals/:id`
+- `POST /api/professionals/:id/upload-photo`
+
+### Reviews e Comentários
+- `GET /api/reviews`
+- `POST /api/reviews`
+- `POST /api/reviews/:id/like/:likeType`
+- `GET /api/reviews/:reviewId/comments`
+- `POST /api/reviews/:reviewId/comments`
+- `POST /api/comments/:commentId/like/:likeType`
+- `GET /api/user/likes`
+- `GET /api/user/comment-likes`
+
+### Admin / Configurações
+- `GET /api/admin/users`
+- `POST /api/admin/users`
+- `DELETE /api/admin/users/:id`
+- `PATCH /api/admin/users/:id/master`
+- `GET /api/banner`
+- `PUT /api/banner`
+- `POST /api/banner/upload-image`
+- `GET /api/footer`
+- `PUT /api/footer`
+- `GET /api/site-config`
+- `PUT /api/site-config`
+- `POST /api/site-config/upload-logo`
+- `POST /api/site-config/upload-appointment-background`
+- `GET /api/schedule-blocks`
+- `POST /api/schedule-blocks`
+- `DELETE /api/schedule-blocks/:id`
+- `POST /api/admin/regenerate-images`
+- `PATCH /api/user/phone`
+- `POST /api/user/upload-profile-image`
 
 ---
 
 ## Configuração e Deployment
 
-### Variáveis de Ambiente Necessárias
+### Variáveis de Ambiente
 
 ```env
-# Banco de Dados (Obrigatório)
 DATABASE_URL=postgresql://user:password@host:port/database
-
-# Autenticação de Sessão (Obrigatório)
 SESSION_SECRET=sua_chave_secreta_aqui
-
-# Google OAuth (Opcional)
 GOOGLE_CLIENT_ID=seu_google_client_id
 GOOGLE_CLIENT_SECRET=seu_google_client_secret
-
-# Email para Recuperação de Senha (Opcional)
 EMAIL_USER=seu_email@gmail.com
 EMAIL_PASS=sua_senha_de_aplicativo
-
-# SendGrid (Produção - Opcional)
 SENDGRID_API_KEY=sua_chave_sendgrid
 ```
 
-### Processo de Deploy no Replit
+### Deploy no Replit
 
-1. **Fork do Projeto**: Clone o repositório
-2. **Configurar Variáveis**: Adicione as variáveis de ambiente
-3. **Banco de Dados**: Provisione PostgreSQL
-4. **Executar Migração**: `npm run db:push`
-5. **Iniciar Aplicação**: `npm run dev`
+1. Clone o repositório
+2. Configure variáveis de ambiente
+3. Provisione o banco PostgreSQL
+4. Execute `npm install`
+5. Execute `npm run db:push`
+6. Execute `npm run dev`
 
-### Configuração do Google OAuth
+### Configuração de Google OAuth
 
-1. Acesse [Google Cloud Console](https://console.cloud.google.com)
-2. Crie um novo projeto ou selecione existente
-3. Ative a API "Google+ API"
-4. Crie credenciais OAuth 2.0
-5. Configure URLs autorizadas:
-   - **Origens JavaScript**: `https://seu-dominio.replit.app`
-   - **URIs de redirecionamento**: `https://seu-dominio.replit.app/api/auth/google/callback`
+1. Acesse Google Cloud Console
+2. Crie credenciais OAuth 2.0
+3. Adicione origem JavaScript
+4. Adicione redirect URI `/api/auth/google/callback`
 
 ### Configuração de Email
 
-**Opção 1 - Gmail:**
-1. Ative verificação em 2 etapas
-2. Gere senha de aplicativo
-3. Use como `EMAIL_PASS`
+**Gmail:**
+- Ative verificação em 2 etapas
+- Gere senha de aplicativo
+- Utilize no `EMAIL_PASS`
 
-**Opção 2 - SendGrid:**
-1. Crie conta no SendGrid
-2. Gere API Key
-3. Configure `SENDGRID_API_KEY`
+**SendGrid:**
+- Gere API Key
+- Configure `SENDGRID_API_KEY`
 
 ---
 
@@ -305,114 +387,53 @@ SENDGRID_API_KEY=sua_chave_sendgrid
 
 ### Problemas Comuns
 
-#### 1. Erro de Autenticação Google
-**Sintoma**: "Error 400: redirect_uri_mismatch"
-**Solução**: 
-- Verifique URLs no Google Cloud Console
-- Certifique-se que coincidem com o domínio atual
-- Aguarde até 5 minutos para propagação
+#### Erro de autenticação Google
+- Verifique redirect URI no Google Cloud
+- Confirme URL da aplicação
+- Aguarde propagação
 
-#### 2. Emails Não Enviados
-**Sintoma**: "Erro ao enviar email de recuperação"
-**Soluções**:
-- Verifique credenciais de email
-- Confirme senha de aplicativo (Gmail)
-- Teste com SendGrid em produção
+#### Emails não enviados
+- Confira credenciais SMTP
+- Use senha de aplicativo do Gmail
+- Teste com SendGrid
 
-#### 3. Imagens Não Carregam
-**Sintoma**: Imagens quebradas após deploy
-**Solução**: 
+#### Imagens não carregam
 - Execute `/api/admin/regenerate-images`
-- Sistema regenera automaticamente SVGs padrão
-- Faça novo upload se necessário
+- Refaça upload se necessário
 
-#### 4. Agendamentos com Data Errada
-**Sintoma**: Discrepância de datas entre usuário e admin
-**Solução**: 
-- Problema de timezone já corrigido
-- Função `formatDate` implementada
-- Datas agora consistentes
+#### Agendamentos duplicados
+- Verifique bloqueios de agenda
+- Confirme horários válidos
 
-#### 5. Banco de Dados Não Conecta
-**Sintoma**: "Database connection failed"
-**Soluções**:
+#### Banco de dados não conecta
 - Verifique `DATABASE_URL`
-- Confirme que banco está ativo
-- Execute `npm run db:push` para criar tabelas
-
-### Logs de Debug
-
-**Backend (Terminal):**
-```bash
-# Logs de autenticação
-[auth] User login attempt: email@example.com
-
-# Logs de agendamentos
-[appointments] Creating appointment with data: {...}
-
-# Logs de imagens
-[images] Serving image for service: 3
-```
-
-**Frontend (Console do Navegador):**
-- Erros de formulário aparecem no console
-- Network tab mostra requisições falhadas
-- React DevTools para debug de componentes
+- Confirme que DB está disponível
+- Rode migrações
 
 ---
 
 ## Histórico de Atualizações
 
+### Versão 2.1 (Junho 2026)
+- Permitido `Admin` criar e excluir usuários do sistema
+- Máscara de telefone nos formulários de clientes e rodapé
+- Suporte a likes `heart` e `thumbs` em comentários
+- Atualização da documentação e correções de TS
+
 ### Versão 2.0 (Julho 2025)
-**Principais Melhorias:**
-- ✅ Migração completa para PostgreSQL
-- ✅ Sistema de armazenamento de imagens em Base64
-- ✅ Correção de problemas de timezone
-- ✅ Interface de usuário aprimorada
-- ✅ Sistema de recuperação de senha por email
-- ✅ Google OAuth totalmente funcional
-
-### Funcionalidades Implementadas:
-
-#### Sistema de Upload de Imagens
-- Upload seguro de imagens para serviços
-- Validação de tipos e tamanho
-- Armazenamento no banco de dados
-
-#### Menu Administrativo
-- Interface organizada para administradores
-- Acesso rápido a todas as funcionalidades
-- Design responsivo
-
-#### Personalização Completa
-- Configuração do site (nome, logo, cores)
-- Banner personalizável
-- Rodapé configurável
-- Tabela de preços dinâmica
-
-#### Gestão Avançada
-- CRUD completo de serviços e categorias
-- Sistema de agendamentos com horários de 40min
-- Prevenção de conflitos de horário
-- Gestão de vendas e relatórios
-
-#### Melhorias de UX
-- Status de agendamento com ícones e cores
-- Formatação correta de datas
-- Sistema de avaliações com curtidas
-- Páginas de perfil personalizadas
+- Migração para PostgreSQL
+- Armazenamento de imagens em Base64
+- Interface de usuário aprimorada
+- Recuperação de senha por email
+- Google OAuth funcional
 
 ---
 
-## Contato e Suporte
+## Contato
 
 **Desenvolvedor**: Leandro Menezes
 **Sistema**: Salão de Beleza - Gestão Completa
 **Tecnologia**: React + TypeScript + PostgreSQL
 
-Este sistema foi desenvolvido para oferecer uma solução completa e moderna para salões de beleza, priorizando facilidade de uso, personalização e confiabilidade.
-
----
-
-*Documentação atualizada em: Julho 2025*
-*Versão do Sistema: 2.0*
+*Documentação atualizada em: Junho 2026*
+*Versão do Sistema: 2.1*
