@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Save, Eye, ExternalLink, MapPin, Phone, Mail, Clock, MessageCircle } from "lucide-react";
+import { maskPhone } from "@/lib/utils";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { apiRequest } from "@/lib/queryClient";
@@ -247,7 +248,8 @@ export default function FooterManagement() {
                         <FormControl>
                           <Input 
                             placeholder="(11) 3456-7890" 
-                            {...field} 
+                            {...field}
+                            onChange={(e) => field.onChange(maskPhone(e.target.value))}
                           />
                         </FormControl>
                         <FormMessage />

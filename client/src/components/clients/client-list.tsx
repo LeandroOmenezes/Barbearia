@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, UserPlus, Phone, Mail, Trash, Edit, UserCheck, Calendar } from "lucide-react";
+import { maskPhone } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -288,7 +289,7 @@ export default function ClientList() {
               <label className="text-sm font-medium">Telefone *</label>
               <Input
                 value={newClient.phone}
-                onChange={(e) => setNewClient({...newClient, phone: e.target.value})}
+                onChange={(e) => setNewClient({...newClient, phone: maskPhone(e.target.value)})}
                 placeholder="(00) 00000-0000"
               />
             </div>
@@ -345,7 +346,7 @@ export default function ClientList() {
               <label className="text-sm font-medium">Telefone *</label>
               <Input
                 value={editingClient.phone}
-                onChange={(e) => setEditingClient({...editingClient, phone: e.target.value})}
+                onChange={(e) => setEditingClient({...editingClient, phone: maskPhone(e.target.value)})}
                 placeholder="(00) 00000-0000"
               />
             </div>
