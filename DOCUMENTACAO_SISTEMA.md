@@ -51,8 +51,8 @@ O **Ateliê de Beleza** é um sistema completo de gestão para salões de beleza
 - Nodemailer para envio de email
 
 #### Infraestrutura
-- Replit para deployment
-- Neon Database para PostgreSQL serverless
+- Render para deployment
+- Supabase para PostgreSQL e serviços gerenciados
 - Armazenamento de imagens em Base64 no banco
 
 ### Estrutura de Pastas
@@ -351,7 +351,6 @@ GOOGLE_CLIENT_ID=seu_google_client_id
 GOOGLE_CLIENT_SECRET=seu_google_client_secret
 EMAIL_USER=seu_email@gmail.com
 EMAIL_PASS=sua_senha_de_aplicativo
-SENDGRID_API_KEY=sua_chave_sendgrid
 ```
 
 ### Deploy no Replit
@@ -376,11 +375,7 @@ SENDGRID_API_KEY=sua_chave_sendgrid
 - Ative verificação em 2 etapas
 - Gere senha de aplicativo
 - Utilize no `EMAIL_PASS`
-
-**SendGrid:**
-- Gere API Key
-- Configure `SENDGRID_API_KEY`
-
+ 
 ---
 
 ## Troubleshooting
@@ -395,7 +390,7 @@ SENDGRID_API_KEY=sua_chave_sendgrid
 #### Emails não enviados
 - Confira credenciais SMTP
 - Use senha de aplicativo do Gmail
-- Teste com SendGrid
+- Verifique as configurações de SMTP e credenciais do Gmail
 
 #### Imagens não carregam
 - Execute `/api/admin/regenerate-images`
