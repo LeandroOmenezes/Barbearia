@@ -32,5 +32,7 @@ export default defineConfig({
   build: {
     outDir: path.resolve(__dirname, "dist/public"),
     emptyOutDir: true,
+    // Aumenta o limite de aviso para chunks grandes (kB) para reduzir avisos durante o build
+    chunkSizeWarningLimit: 1000,
   },
 });

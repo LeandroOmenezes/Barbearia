@@ -42,6 +42,35 @@ async function comparePasswords(supplied: string, stored: string) {
   }
 }
 
+// Detectar automaticamente a URL do ambiente (Render, Replit ou Local)
+const normalizeUrl = (value: string) => {
+  const trimmed = value.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed.endsWith('/') ? trimmed.slice(0, -1) : trimmed;
+  }
+  return `https://${trimmed.replace(/\/+$|$/, '')}`;
+};
+
+const getBaseUrl = () => {
+  let url = "http://localhost:5000";
+
+  if (typeof process !== 'undefined' && process.env) {
+    if (process.env.RENDER_EXTERNAL_URL) {
+      url = normalizeUrl(process.env.RENDER_EXTERNAL_URL);
+    } else if (process.env.REPLIT_DOMAINS) {
+      const domain = process.env.REPLIT_DOMAINS.split(',')[0];
+      url = normalizeUrl(domain);
+    } else if (process.env.APP_URL) {
+      url = normalizeUrl(process.env.APP_URL);
+    }
+  }
+
+  return url;
+};
+
+const baseUrl = getBaseUrl();
+const callbackUrl = `${baseUrl}/api/auth/google/callback`;
+
 // Função para gerar um token de recuperação de senha
 async function generatePasswordResetToken(userId: number): Promise<string> {
   const token = randomBytes(32).toString('hex');
@@ -92,57 +121,58 @@ export function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  // Estratégia de autenticação local
   passport.use(
-    new LocalStrategy(async (username, password, done) => {
-      try {
-        const user = await storage.getUserByUsername(username);
-        if (!user || !(await comparePasswords(password, user.password))) {
-          return done(null, false);
-        } else {
+    new LocalStrategy(
+      { usernameField: 'username', passwordField: 'password' },
+      async (username, password, done) => {
+        try {
+          const user = await storage.getUserByUsername(username);
+          if (!user) {
+            return done(null, false, { message: "Email ou senha inválidos" });
+          }
+
+          const validPassword = await comparePasswords(password, user.password || "");
+          if (!validPassword) {
+            return done(null, false, { message: "Email ou senha inválidos" });
+          }
+
           return done(null, user);
+        } catch (error) {
+          return done(error);
         }
-      } catch (error) {
-        return done(error);
       }
-    }),
+    )
   );
-  
+
+  // endpoint de diagnóstico do Google OAuth, disponível sempre
+  app.get("/api/auth/google/debug", (req, res) => {
+    const proto = req.protocol;
+    const host = req.get('host') || '';
+    const dynamicBase = `${proto}://${host}`.replace(/\/+$/, '');
+    const dynamicCallback = `${dynamicBase}/api/auth/google/callback`;
+    const renderUrl = process.env.RENDER_EXTERNAL_URL || null;
+    const appUrl = process.env.APP_URL || null;
+    const callbackUrlFromEnv = `${normalizeUrl(renderUrl || appUrl || 'http://localhost:5000')}/api/auth/google/callback`;
+
+    res.json({
+      dynamicCallback,
+      callbackUrlFromEnv,
+      callbackUrl,
+      renderExternalUrl: renderUrl,
+      appUrl,
+      protocol: proto,
+      host,
+      googleClientId: process.env.GOOGLE_CLIENT_ID || null,
+      googleClientSecretSet: !!process.env.GOOGLE_CLIENT_SECRET,
+    });
+  });
+
   // Estratégia de autenticação do Google (configurada se as credenciais estiverem disponíveis)
   if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-    
-    
-// Detectar automaticamente a URL do ambiente (Render, Replit ou Local)
-const getBaseUrl = () => {
-  let url = "http://localhost:5000";
-
-  // Verifica se estamos em ambiente Node.js (Backend) antes de acessar process.env
-  if (typeof process !== 'undefined' && process.env) {
-    if (process.env.RENDER_EXTERNAL_URL) {
-      url = process.env.RENDER_EXTERNAL_URL;
-    } 
-    else if (process.env.REPLIT_DOMAINS) {
-      // Replit fornece apenas o domínio (ex: antigo.repl.co ou replit.app), precisa do https://
-      const domain = process.env.REPLIT_DOMAINS.split(',')[0];
-      url = domain.startsWith('http') ? domain : `https://${domain}`;
-    } 
-    else if (process.env.APP_URL) {
-      url = process.env.APP_URL;
-    }
-  }
-
-  // Remove a barra do final se ela existir para evitar dupla barra (//)
-  return url.endsWith('/') ? url.slice(0, -1) : url;
-};
-
-const baseUrl = getBaseUrl();
-const callbackUrl = `${baseUrl}/api/auth/google/callback`;
-
-    
     // Verificar se as credenciais do Google são válidas
     if (!process.env.GOOGLE_CLIENT_ID.includes('.googleusercontent.com')) {
     }
-    
+
     passport.use(
       new GoogleStrategy(
         {
@@ -294,13 +324,40 @@ const callbackUrl = `${baseUrl}/api/auth/google/callback`;
   
   // Rotas de autenticação do Google
   if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+    // Rota de diagnóstico temporário para mostrar o callback usado e as variáveis de ambiente
+    app.get("/api/auth/google/debug", (req, res) => {
+      const proto = req.protocol;
+      const host = req.get('host') || '';
+      const dynamicBase = `${proto}://${host}`.replace(/\/+$/, '');
+      const dynamicCallback = `${dynamicBase}/api/auth/google/callback`;
+      const renderUrl = process.env.RENDER_EXTERNAL_URL || null;
+      const appUrl = process.env.APP_URL || null;
+      const callbackUrlFromEnv = `${normalizeUrl(renderUrl || appUrl || 'http://localhost:5000')}/api/auth/google/callback`;
+
+      res.json({
+        dynamicCallback,
+        callbackUrlFromEnv,
+        renderExternalUrl: renderUrl,
+        appUrl,
+        protocol: proto,
+        host,
+        googleClientId: process.env.GOOGLE_CLIENT_ID,
+      });
+    });
+
     // Rota para iniciar o processo de autenticação do Google
     app.get("/api/auth/google", (req, res, next) => {
-      
-      
+      const base = process.env.RENDER_EXTERNAL_URL
+        ? normalizeUrl(process.env.RENDER_EXTERNAL_URL)
+        : process.env.APP_URL
+        ? normalizeUrl(process.env.APP_URL)
+        : `${req.protocol}://${req.get('host') || 'localhost:5000'}`.replace(/\/+$/, '');
+      const dynamicCallback = `${base}/api/auth/google/callback`;
+
       passport.authenticate("google", {
-        scope: ['profile', 'email']
-      })(req, res, next);
+        scope: ['profile', 'email'],
+        callbackURL: dynamicCallback,
+      } as any)(req, res, next);
     });
     
     // Rota para callback do Google após autenticação
