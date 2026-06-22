@@ -34,10 +34,10 @@ export default function Header() {
             <img 
               src={siteConfig.logoUrl} 
               alt={siteConfig.siteName} 
-              className="h-8 w-8 object-contain"
+              className="h-12 w-12 min-w-[48px] object-contain"
             />
           ) : (
-            <i className="fas fa-cut text-blue-500 text-xl"></i>
+            <i className="fas fa-cut text-blue-500 text-2xl"></i>
           )}
           <span className="text-2xl font-bold text-gray-800">
             {siteConfig?.siteName || "Salão de Beleza"}

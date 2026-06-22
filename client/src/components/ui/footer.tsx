@@ -47,10 +47,10 @@ export default function Footer() {
                 <img 
                   src={siteConfig.logoUrl} 
                   alt={siteConfig.siteName} 
-                  className="h-6 w-6 mr-2 object-contain"
+                  className="h-12 w-12 min-w-[48px] mr-3 object-contain"
                 />
               ) : (
-                <i className="fas fa-cut mr-2 text-blue-500"></i>
+                <i className="fas fa-cut mr-3 text-blue-500 text-2xl"></i>
               )}
               {footer.businessName || siteConfig?.siteName}
             </h3>
