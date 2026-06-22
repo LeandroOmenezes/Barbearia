@@ -162,7 +162,7 @@ export function ReviewComments({ reviewId }: ReviewCommentsProps) {
                 <Avatar 
                   userId={user.id}
                   userName={user.name || user.username}
-                  imageUrl={user.profileImageBase64 ? `/api/images/user/${user.id}` : undefined}
+                  imageUrl={user.profileImageBase64 ? (user.profileImageBase64.startsWith('http') ? user.profileImageBase64 : `/api/images/user/${user.id}`) : undefined}
                   size="sm"
                   className="flex-shrink-0"
                 />
@@ -221,7 +221,7 @@ export function ReviewComments({ reviewId }: ReviewCommentsProps) {
                   <Avatar 
                     userId={comment.userId}
                     userName={comment.userName}
-                    imageUrl={comment.userProfileImageBase64 ? `/api/images/user/${comment.userId}` : undefined}
+                    imageUrl={comment.userProfileImageBase64 ? (comment.userProfileImageBase64.startsWith('http') ? comment.userProfileImageBase64 : `/api/images/user/${comment.userId}`) : undefined}
                     size="sm"
                     className="flex-shrink-0"
                   />

@@ -9,6 +9,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import express from "express";
+import { uploadFileToSupabase } from "./supabase";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -221,14 +222,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Read the file and convert to base64
       const imageBuffer = fs.readFileSync(req.file.path);
-      const imageBase64 = imageBuffer.toString('base64');
       const mimeType = req.file.mimetype;
-      
-      // Update service with image data in database
-      const updatedService = await storage.updateServiceImageData(serviceId, imageBase64, mimeType);
-      
+      const ext = path.extname(req.file.originalname).toLowerCase() || ".jpg";
+      const uploadPath = `services/service-${serviceId}-${Date.now()}${ext}`;
+      const publicUrl = await uploadFileToSupabase(uploadPath, imageBuffer, mimeType);
+
       // Remove the temporary uploaded file
       fs.unlinkSync(req.file.path);
+
+      const updatedService = await storage.updateServiceImage(serviceId, publicUrl);
       
       if (!updatedService) {
         return res.status(404).json({ message: "Serviço não encontrado" });
@@ -237,7 +239,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         message: "Imagem salva com sucesso no banco de dados",
         service: updatedService,
-        imageUrl: `/api/images/service/${serviceId}`
+        imageUrl: updatedService.imageUrl || publicUrl
       });
     } catch (error) {
       
@@ -1289,14 +1291,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Read the file and convert to base64
       const imageBuffer = fs.readFileSync(req.file.path);
-      const imageBase64 = imageBuffer.toString('base64');
       const mimeType = req.file.mimetype;
+      const ext = path.extname(req.file.originalname).toLowerCase() || ".jpg";
+      const uploadPath = `banner/background-${Date.now()}${ext}`;
+      const publicUrl = await uploadFileToSupabase(uploadPath, imageBuffer, mimeType);
+
+      try { fs.unlinkSync(req.file.path); } catch (_) {}
       
-      // Update banner with image data in database
-      const updatedBanner = await storage.updateBannerImageData(imageBase64, mimeType);
-      
-      // Remove the temporary uploaded file
-      fs.unlinkSync(req.file.path);
+      const updatedBanner = await storage.updateBannerImage(publicUrl);
       
       if (!updatedBanner) {
         return res.status(404).json({ message: "Configuração de banner não encontrada" });
@@ -1305,7 +1307,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         message: "Imagem de fundo do banner salva no banco de dados",
         banner: updatedBanner,
-        imageUrl: "/api/images/banner"
+        imageUrl: updatedBanner.backgroundImage || publicUrl
       });
     } catch (error) {
       
@@ -1399,15 +1401,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Convert the uploaded file to a Base64 data URL so it persists in the database
       const fileBuffer = fs.readFileSync(req.file.path);
-      const base64Data = fileBuffer.toString('base64');
       const mimeType = req.file.mimetype;
-      const logoUrl = `data:${mimeType};base64,${base64Data}`;
+      const ext = path.extname(req.file.originalname).toLowerCase() || ".png";
+      const uploadPath = `logo/logo-${Date.now()}${ext}`;
+      const publicUrl = await uploadFileToSupabase(uploadPath, fileBuffer, mimeType);
 
-      // Remove the temporary file from disk — not needed anymore
       try { fs.unlinkSync(req.file.path); } catch (_) {}
       
-      // Update site config with new logo stored as Base64
-      const updatedConfig = await storage.updateSiteLogo(logoUrl);
+      const updatedConfig = await storage.updateSiteLogo(publicUrl);
       
       if (!updatedConfig) {
         return res.status(404).json({ message: "Configuração do site não encontrada" });
@@ -1416,7 +1417,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         message: "Logo do site atualizada com sucesso",
         config: updatedConfig,
-        logoUrl
+        logoUrl: publicUrl
       });
     } catch (error) {
       
@@ -1444,8 +1445,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const fileBuffer = fs.readFileSync(req.file.path);
-      const base64Data = fileBuffer.toString('base64');
       const mimeType = req.file.mimetype;
+      const ext = path.extname(req.file.originalname).toLowerCase() || ".png";
+      const uploadPath = `appointment-backgrounds/appointment-${Date.now()}${ext}`;
+      const publicUrl = await uploadFileToSupabase(uploadPath, fileBuffer, mimeType);
 
       try { fs.unlinkSync(req.file.path); } catch (_) {}
       
@@ -1459,7 +1462,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         siteSlogan: config.siteSlogan || undefined,
         logoUrl: config.logoUrl || undefined,
         primaryColor: config.primaryColor || undefined,
-        appointmentBackgroundImageBase64: base64Data,
+        appointmentBackgroundImageBase64: publicUrl,
         appointmentBackgroundImageMimeType: mimeType,
       });
 
@@ -1568,10 +1571,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!req.file) return res.status(400).json({ message: "Nenhuma foto enviada" });
       const id = parseInt(req.params.id);
       const fileBuffer = fs.readFileSync(req.file.path);
-      const base64Data = fileBuffer.toString("base64");
       const mimeType = req.file.mimetype;
+      const ext = path.extname(req.file.originalname).toLowerCase() || ".png";
+      const uploadPath = `professionals/photo-${id}-${Date.now()}${ext}`;
+      const publicUrl = await uploadFileToSupabase(uploadPath, fileBuffer, mimeType);
       fs.unlinkSync(req.file.path);
-      const updated = await storage.uploadProfessionalPhoto(id, base64Data, mimeType);
+      const updated = await storage.uploadProfessionalPhoto(id, publicUrl, mimeType);
       if (!updated) return res.status(404).json({ message: "Profissional não encontrado" });
       res.json({ message: "Foto enviada com sucesso", professional: updated });
     } catch {
@@ -1680,11 +1685,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Ler o arquivo e converter para base64
       const imageBuffer = fs.readFileSync(req.file.path);
-      const imageDataBase64 = imageBuffer.toString('base64');
       const mimeType = req.file.mimetype;
+      const ext = path.extname(req.file.originalname).toLowerCase() || ".png";
+      const uploadPath = `profiles/user-${req.user.id}-${Date.now()}${ext}`;
+      const publicUrl = await uploadFileToSupabase(uploadPath, imageBuffer, mimeType);
 
       // Atualizar usuário no banco
-      const updatedUser = await storage.updateUserProfileImage(req.user.id, imageDataBase64, mimeType);
+      const updatedUser = await storage.updateUserProfileImage(req.user.id, publicUrl, mimeType);
       
       // Remover arquivo temporário
       fs.unlinkSync(req.file.path);
@@ -1712,23 +1719,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = parseInt(req.params.id);
       const user = await storage.getUser(userId);
 
-      if (!user || !user.profileImageBase64 || !user.profileImageMimeType) {
+      if (!user || !user.profileImageBase64) {
         return res.status(404).json({ error: "Imagem de perfil não encontrada" });
       }
 
-      // Converter base64 para buffer
+      if (user.profileImageBase64.startsWith("http")) {
+        return res.redirect(user.profileImageBase64);
+      }
+
+      if (user.profileImageBase64.startsWith("data:")) {
+        const [, mimeType, base64Data] = user.profileImageBase64.match(/^data:(.+);base64,(.*)$/) || [];
+        if (!mimeType || !base64Data) {
+          return res.status(400).json({ error: "Formato de imagem inválido" });
+        }
+        const imageBuffer = Buffer.from(base64Data, 'base64');
+        res.set({
+          'Content-Type': mimeType,
+          'Content-Length': imageBuffer.length.toString(),
+          'Cache-Control': 'public, max-age=86400'
+        });
+        return res.send(imageBuffer);
+      }
+
+      const isSelfRoute = user.profileImageBase64 === `/api/images/user/${userId}`;
+      if (!isSelfRoute && user.profileImageBase64.startsWith("/")) {
+        return res.redirect(user.profileImageBase64);
+      }
+
+      if (!user.profileImageMimeType) {
+        return res.status(404).json({ error: "Mime type da imagem não encontrado" });
+      }
+
       const imageBuffer = Buffer.from(user.profileImageBase64, 'base64');
 
-      // Configurar headers
       res.set({
         'Content-Type': user.profileImageMimeType,
         'Content-Length': imageBuffer.length.toString(),
-        'Cache-Control': 'public, max-age=86400' // Cache por 24 horas
+        'Cache-Control': 'public, max-age=86400'
       });
 
       res.send(imageBuffer);
     } catch (error) {
-      
       res.status(500).json({ error: "Erro interno do servidor" });
     }
   });
@@ -1742,14 +1773,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const service = await storage.getServiceById(serviceId);
-      if (!service || !service.imageDataBase64) {
+      if (!service) {
         return res.status(404).json({ message: "Imagem não encontrada" });
       }
 
-      // Convert base64 back to buffer
+      if (service.imageUrl && service.imageUrl.startsWith("http")) {
+        return res.redirect(service.imageUrl);
+      }
+
+      if (service.imageUrl && service.imageUrl.startsWith("data:")) {
+        const [, mimeType, base64Data] = service.imageUrl.match(/^data:(.+);base64,(.*)$/) || [];
+        if (!mimeType || !base64Data) {
+          return res.status(400).json({ message: "Formato de imagem inválido" });
+        }
+        const imageBuffer = Buffer.from(base64Data, 'base64');
+        res.set('Content-Type', mimeType);
+        res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+        return res.send(imageBuffer);
+      }
+
+      const serviceImageSelfRoute = service.imageUrl?.startsWith(`/api/images/service/${serviceId}`);
+      if (service.imageUrl && !serviceImageSelfRoute) {
+        return res.redirect(service.imageUrl);
+      }
+
+      if (!service.imageDataBase64) {
+        return res.status(404).json({ message: "Imagem não encontrada" });
+      }
+
       const imageBuffer = Buffer.from(service.imageDataBase64, 'base64');
       
-      // Set proper content type
       res.set('Content-Type', service.imageMimeType || 'image/jpeg');
       res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.set('Pragma', 'no-cache');
@@ -1757,7 +1810,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.send(imageBuffer);
     } catch (error) {
-      
       res.status(500).json({ message: "Erro ao servir imagem" });
     }
   });
@@ -1766,20 +1818,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/images/banner", async (req: Request, res: Response) => {
     try {
       const banner = await storage.getBanner();
-      if (!banner || !banner.backgroundImageDataBase64) {
+      if (!banner) {
         return res.status(404).json({ message: "Imagem do banner não encontrada" });
       }
 
-      // Convert base64 back to buffer
+      if (banner.backgroundImage && banner.backgroundImage.startsWith("http")) {
+        return res.redirect(banner.backgroundImage);
+      }
+
+      if (banner.backgroundImage && banner.backgroundImage.startsWith("data:")) {
+        const [, mimeType, base64Data] = banner.backgroundImage.match(/^data:(.+);base64,(.*)$/) || [];
+        if (!mimeType || !base64Data) {
+          return res.status(400).json({ message: "Formato de imagem inválido" });
+        }
+        const imageBuffer = Buffer.from(base64Data, 'base64');
+        res.set('Content-Type', mimeType);
+        res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+        return res.send(imageBuffer);
+      }
+
+      const bannerSelfRoute = banner.backgroundImage?.startsWith("/api/images/banner");
+      if (banner.backgroundImage && !bannerSelfRoute) {
+        return res.redirect(banner.backgroundImage);
+      }
+
+      if (!banner.backgroundImageDataBase64) {
+        return res.status(404).json({ message: "Imagem do banner não encontrada" });
+      }
+
       const imageBuffer = Buffer.from(banner.backgroundImageDataBase64, 'base64');
       
-      // Set proper content type
       res.set('Content-Type', banner.backgroundImageMimeType || 'image/jpeg');
       res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
       
       res.send(imageBuffer);
     } catch (error) {
-      
       res.status(500).json({ message: "Erro ao servir imagem do banner" });
     }
   });

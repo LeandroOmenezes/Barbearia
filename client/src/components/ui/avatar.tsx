@@ -25,13 +25,17 @@ export function Avatar({ userId, userName, imageUrl, size = "md", className = ""
 
   const finalImageUrl = imageUrl;
   const initials = userName ? userName.charAt(0).toUpperCase() : "U";
+  const imageSrc = finalImageUrl
+    ? finalImageUrl.startsWith("http")
+      ? `${finalImageUrl}${finalImageUrl.includes("?") ? "&" : "?"}cache=${Date.now()}`
+      : finalImageUrl
+    : undefined;
 
   return (
     <div className={`${sizeClasses[size]} relative rounded-full overflow-hidden border border-gray-200 bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center ${className}`}>
-      {finalImageUrl ? (
+      {imageSrc ? (
         <img
-          key={`${userId}-${Date.now()}`}
-          src={`${finalImageUrl}?cache=${Math.random()}`}
+          src={imageSrc}
           alt={`Foto de ${userName}`}
           className="w-full h-full object-cover"
           onError={(e) => {
