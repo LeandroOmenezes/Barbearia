@@ -138,7 +138,7 @@ export default function ReviewCard({ review }: ReviewCardProps) {
         <Avatar
           userId={review.userId}
           userName={review.clientName}
-          imageUrl={review.userId && review.userProfileImageBase64 ? `/api/images/user/${review.userId}` : undefined}
+          imageUrl={review.userId && review.userProfileImageBase64 ? (review.userProfileImageBase64.startsWith('http') ? review.userProfileImageBase64 : `/api/images/user/${review.userId}`) : undefined}
           size="lg"
           className="mr-4 flex-shrink-0"
         />

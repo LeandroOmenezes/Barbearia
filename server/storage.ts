@@ -35,7 +35,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, data: Partial<User>): Promise<User | undefined>;
   updateUserPassword(id: number, password: string): Promise<User | undefined>;
-  updateUserProfileImage(id: number, imageDataBase64: string, mimeType: string): Promise<User | undefined>;
+  updateUserProfileImage(id: number, imageUrl: string, mimeType: string): Promise<User | undefined>;
   deleteUser(id: number): Promise<boolean>;
 
   // Clients
@@ -169,7 +169,7 @@ export interface IStorage {
   createProfessional(data: InsertProfessional): Promise<Professional>;
   updateProfessional(id: number, data: Partial<InsertProfessional>): Promise<Professional | undefined>;
   deleteProfessional(id: number): Promise<boolean>;
-  uploadProfessionalPhoto(id: number, photoBase64: string, photoMimeType: string): Promise<Professional | undefined>;
+  uploadProfessionalPhoto(id: number, photoUrl: string, photoMimeType: string): Promise<Professional | undefined>;
   getAppointmentsByProfessionalId(professionalId: number): Promise<Appointment[]>;
   getUnseenCountForProfessional(professionalId: number): Promise<number>;
   markAppointmentsSeenByProfessional(professionalId: number): Promise<void>;
@@ -479,10 +479,16 @@ export class MemStorage implements IStorage {
     const id = this.currentUserId++;
     const now = new Date();
     const user: User = {
-      ...insertUser,
       id,
-      // Usar o valor fornecido ou false como padrão
+      username: insertUser.username,
+      password: insertUser.password,
+      name: insertUser.name ?? null,
+      phone: insertUser.phone ?? null,
+      email: insertUser.email ?? null,
       isAdmin: insertUser.isAdmin ?? false,
+      isMaster: insertUser.isMaster ?? false,
+      profileImageBase64: insertUser.profileImageBase64 ?? null,
+      profileImageMimeType: insertUser.profileImageMimeType ?? null,
       createdAt: now,
     };
     this.users.set(id, user);
@@ -514,12 +520,12 @@ export class MemStorage implements IStorage {
 
   async updateUserProfileImage(
     id: number,
-    imageDataBase64: string,
+    imageUrl: string,
     mimeType: string,
   ): Promise<User | undefined> {
     const user = this.users.get(id);
     if (user) {
-      const updatedUser = { ...user, profileImageBase64: imageDataBase64, profileImageMimeType: mimeType };
+      const updatedUser = { ...user, profileImageBase64: imageUrl, profileImageMimeType: mimeType };
       this.users.set(id, updatedUser);
       return updatedUser;
     }
@@ -558,8 +564,11 @@ export class MemStorage implements IStorage {
       password,
       name: client.name,
       phone: client.phone,
-      email: client.email,
+      email: client.email ?? null,
       isAdmin: false,
+      isMaster: false,
+      profileImageBase64: null,
+      profileImageMimeType: null,
       createdAt: now,
     };
 
@@ -665,7 +674,19 @@ export class MemStorage implements IStorage {
 
   async createService(insertService: InsertService): Promise<Service> {
     const id = this.currentServiceId++;
-    const service: Service = { ...insertService, id };
+    const service: Service = {
+      id,
+      name: insertService.name,
+      description: insertService.description,
+      minPrice: insertService.minPrice,
+      maxPrice: insertService.maxPrice,
+      categoryId: insertService.categoryId,
+      icon: insertService.icon,
+      imageUrl: insertService.imageUrl ?? null,
+      imageDataBase64: null,
+      imageMimeType: null,
+      featured: insertService.featured ?? false,
+    };
     this.services.set(id, service);
     return service;
   }
@@ -786,9 +807,18 @@ export class MemStorage implements IStorage {
     const id = this.currentAppointmentId++;
     const now = new Date();
     const appointment: Appointment = {
-      ...insertAppointment,
       id,
+      name: insertAppointment.name,
+      email: insertAppointment.email,
+      phone: insertAppointment.phone,
+      serviceId: insertAppointment.serviceId,
+      categoryId: insertAppointment.categoryId,
+      professionalId: insertAppointment.professionalId ?? null,
+      date: insertAppointment.date,
+      time: insertAppointment.time,
+      notes: insertAppointment.notes ?? null,
       status: "pending",
+      seenByProfessional: insertAppointment.seenByProfessional ?? false,
       createdAt: now,
     };
     this.appointments.set(id, appointment);
@@ -817,10 +847,15 @@ export class MemStorage implements IStorage {
     const id = this.currentReviewId++;
     const now = new Date();
     const review: Review = {
-      ...insertReview,
       id,
+      userId: insertReview.userId ?? null,
+      clientName: insertReview.clientName,
+      rating: insertReview.rating,
+      comment: insertReview.comment,
+      likes: insertReview.likes ?? 0,
+      thumbsLikes: insertReview.thumbsLikes ?? 0,
       createdAt: now,
-      likes: insertReview.likes || 0,
+      userProfileImageBase64: insertReview.userProfileImageBase64 ?? null,
     };
     this.reviews.set(id, review);
     return review;
@@ -857,9 +892,10 @@ export class MemStorage implements IStorage {
     return { review: updatedReview, userLiked: !userAlreadyLiked };
   }
 
-  async getUserLikes(userId: number): Promise<number[]> {
+  async getUserLikes(userId: number): Promise<{heartLikes: number[]; thumbsLikes: number[]}> {
     const userLikeSet = this.userLikes.get(userId);
-    return userLikeSet ? Array.from(userLikeSet) : [];
+    const likes = userLikeSet ? Array.from(userLikeSet) : [];
+    return { heartLikes: likes, thumbsLikes: [] };
   }
 
   // === Sales ===
@@ -1059,11 +1095,24 @@ export class MemStorage implements IStorage {
   async getProfessionalById(id: number): Promise<Professional | undefined> { return undefined; }
   async getProfessionalByUserId(userId: number): Promise<Professional | undefined> { return undefined; }
   async createProfessional(data: InsertProfessional): Promise<Professional> {
-    return { id: Date.now(), ...data, bio: data.bio ?? null, photoBase64: data.photoBase64 ?? null, photoMimeType: data.photoMimeType ?? null, active: data.active ?? true, userId: data.userId ?? null, createdAt: new Date() };
+    return {
+      id: Date.now(),
+      name: data.name,
+      categoryId: data.categoryId,
+      bio: data.bio ?? null,
+      photoBase64: data.photoBase64 ?? null,
+      photoMimeType: data.photoMimeType ?? null,
+      active: data.active ?? true,
+      appointmentInterval: data.appointmentInterval ?? 40,
+      userId: data.userId ?? null,
+      lunchBreakStart: data.lunchBreakStart ?? null,
+      lunchBreakEnd: data.lunchBreakEnd ?? null,
+      createdAt: new Date(),
+    };
   }
   async updateProfessional(id: number, data: Partial<InsertProfessional>): Promise<Professional | undefined> { return undefined; }
   async deleteProfessional(id: number): Promise<boolean> { return false; }
-  async uploadProfessionalPhoto(id: number, photoBase64: string, photoMimeType: string): Promise<Professional | undefined> { return undefined; }
+  async uploadProfessionalPhoto(id: number, photoUrl: string, photoMimeType: string): Promise<Professional | undefined> { return undefined; }
   async getAppointmentsByProfessionalId(professionalId: number): Promise<Appointment[]> { return []; }
   async getUnseenCountForProfessional(professionalId: number): Promise<number> { return 0; }
   async markAppointmentsSeenByProfessional(professionalId: number): Promise<void> {}
@@ -1117,9 +1166,9 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
-  async updateUserProfileImage(id: number, imageDataBase64: string, mimeType: string): Promise<User | undefined> {
+  async updateUserProfileImage(id: number, imageUrl: string, mimeType: string): Promise<User | undefined> {
     const [user] = await db.update(users)
-      .set({ profileImageBase64: imageDataBase64, profileImageMimeType: mimeType })
+      .set({ profileImageBase64: imageUrl, profileImageMimeType: mimeType })
       .where(eq(users.id, id))
       .returning();
     return user || undefined;
@@ -1779,9 +1828,9 @@ export class DatabaseStorage implements IStorage {
     return (result.rowCount || 0) > 0;
   }
 
-  async uploadProfessionalPhoto(id: number, photoBase64: string, photoMimeType: string): Promise<Professional | undefined> {
+  async uploadProfessionalPhoto(id: number, photoUrl: string, photoMimeType: string): Promise<Professional | undefined> {
     const [updated] = await db.update(professionals)
-      .set({ photoBase64, photoMimeType })
+      .set({ photoBase64: photoUrl, photoMimeType })
       .where(eq(professionals.id, id))
       .returning();
     return updated;

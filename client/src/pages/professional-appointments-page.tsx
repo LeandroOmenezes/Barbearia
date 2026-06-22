@@ -148,7 +148,11 @@ export default function ProfessionalAppointmentsPage() {
           <div className="container mx-auto px-4 py-6 flex items-center gap-4">
             <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-primary/30 bg-gray-100 flex items-center justify-center shrink-0">
               {prof.photoBase64 ? (
-                <img src={`data:${prof.photoMimeType};base64,${prof.photoBase64}`} alt={prof.name} className="w-full h-full object-cover" />
+                <img
+                  src={prof.photoBase64.startsWith('http') ? prof.photoBase64 : `data:${prof.photoMimeType};base64,${prof.photoBase64}`}
+                  alt={prof.name}
+                  className="w-full h-full object-cover"
+                />
               ) : (
                 <Users className="w-7 h-7 text-gray-400" />
               )}

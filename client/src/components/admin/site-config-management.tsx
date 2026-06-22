@@ -378,7 +378,9 @@ export default function SiteConfigManagement() {
                   {config?.appointmentBackgroundImageBase64 && (
                     <div className="mt-3 rounded-lg overflow-hidden border">
                       <img 
-                        src={`data:${config.appointmentBackgroundImageMimeType || 'image/png'};base64,${config.appointmentBackgroundImageBase64}`}
+                        src={config.appointmentBackgroundImageBase64.startsWith('http')
+                          ? config.appointmentBackgroundImageBase64
+                          : `data:${config.appointmentBackgroundImageMimeType || 'image/png'};base64,${config.appointmentBackgroundImageBase64}`}
                         alt="Imagem de fundo de agendamento"
                         className="w-full h-32 object-cover"
                       />

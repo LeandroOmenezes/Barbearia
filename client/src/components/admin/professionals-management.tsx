@@ -164,7 +164,7 @@ export default function ProfessionalsManagement() {
             <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-200 bg-gray-100 flex items-center justify-center">
               {p.photoBase64 ? (
                 <img
-                  src={`data:${p.photoMimeType};base64,${p.photoBase64}`}
+                  src={p.photoBase64.startsWith('http') ? p.photoBase64 : `data:${p.photoMimeType};base64,${p.photoBase64}`}
                   alt={p.name}
                   className="w-full h-full object-cover"
                 />

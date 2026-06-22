@@ -130,7 +130,12 @@ export function ProfileImageUpload({
 
   // Check if user has a profile image
   const userHasImage = user?.profileImageBase64;
-  const imageUrl = imagePreview || (userHasImage ? `/api/images/user/${userId}?t=${Date.now()}` : currentImageUrl);
+  const computedUserImageUrl = userHasImage
+    ? user.profileImageBase64!.startsWith("http")
+      ? user.profileImageBase64
+      : `data:${user.profileImageMimeType || 'image/png'};base64,${user.profileImageBase64}`
+    : undefined;
+  const imageUrl = imagePreview || computedUserImageUrl || currentImageUrl;
   const canUpload = user && user.id === userId;
 
   return (

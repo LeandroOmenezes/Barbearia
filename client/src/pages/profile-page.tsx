@@ -168,7 +168,7 @@ export default function ProfilePage() {
                   <div className="mx-auto sm:mx-0">
                     <ProfileImageUpload
                       userId={user!.id}
-                      currentImageUrl={user!.profileImageBase64 ? `/api/images/user/${user!.id}` : undefined}
+                      currentImageUrl={user!.profileImageBase64 ? (user!.profileImageBase64.startsWith('http') ? user!.profileImageBase64 : `/api/images/user/${user!.id}`) : undefined}
                       size="lg"
                     />
                   </div>

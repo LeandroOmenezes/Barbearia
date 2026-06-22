@@ -21,7 +21,7 @@ function Hero() {
   const subtitle = banner?.subtitle || "Transforme sua aparência e eleve sua autoestima com nossos serviços profissionais de beleza.";
   const ctaText = banner?.ctaText || "Agendar Agora";
   const ctaLink = banner?.ctaLink || "#appointments";
-  // Use base64 data directly to avoid browser image URL caching issues
+  // Use base64 data if present; otherwise use a stored URL.
   const backgroundImage = banner?.backgroundImageDataBase64
     ? `data:${banner.backgroundImageMimeType || 'image/jpeg'};base64,${banner.backgroundImageDataBase64}`
     : banner?.backgroundImage || null;
@@ -181,7 +181,7 @@ function Appointments() {
   });
 
   const backgroundImageUrl = config?.appointmentBackgroundImageBase64 
-    ? `url(data:${config.appointmentBackgroundImageMimeType || 'image/png'};base64,${config.appointmentBackgroundImageBase64})`
+    ? `url(${config.appointmentBackgroundImageBase64.startsWith('http') ? config.appointmentBackgroundImageBase64 : `data:${config.appointmentBackgroundImageMimeType || 'image/png'};base64,${config.appointmentBackgroundImageBase64}`})`
     : "url('/images/client-area-bg.svg')";
 
   return (

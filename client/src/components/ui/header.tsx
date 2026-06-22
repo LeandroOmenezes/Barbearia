@@ -68,7 +68,7 @@ export default function Header() {
                 <Avatar 
                   userId={user.id} 
                   userName={user.name || user.username}
-                  imageUrl={user.profileImageBase64 ? `/api/images/user/${user.id}` : undefined}
+                  imageUrl={user.profileImageBase64 ? (user.profileImageBase64.startsWith('http') ? user.profileImageBase64 : `/api/images/user/${user.id}`) : undefined}
                   size="sm"
                 />
                 <div className="text-sm">
@@ -131,7 +131,7 @@ export default function Header() {
                 <Avatar 
                   userId={user.id} 
                   userName={user.name || user.username}
-                  imageUrl={user.profileImageBase64 ? `/api/images/user/${user.id}` : undefined}
+                  imageUrl={user.profileImageBase64 ? (user.profileImageBase64.startsWith('http') ? user.profileImageBase64 : `/api/images/user/${user.id}`) : undefined}
                   size="sm"
                 />
                 <div className="text-sm">
