@@ -15,6 +15,16 @@ import { apiRequest } from "@/lib/queryClient";
 import { Link } from "wouter";
 import { z } from "zod";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 
 const siteConfigFormSchema = insertSiteConfigSchema.extend({
   siteName: z.string().min(1, "Nome do site é obrigatório"),
@@ -153,6 +163,31 @@ export default function SiteConfigManagement() {
     }
   });
 
+  const deleteFileMutation = useMutation({
+    mutationFn: async (publicUrl: string) => {
+      const res = await fetch('/api/storage/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ publicUrl }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Erro ao deletar arquivo');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/site-config'] });
+      toast({ title: 'Removido', description: 'Arquivo removido com sucesso' });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Erro', description: error.message || 'Erro ao deletar arquivo', variant: 'destructive' });
+    }
+  });
+
+  const [logoToDelete, setLogoToDelete] = useState<string | null>(null);
+  const [appointmentBgToDelete, setAppointmentBgToDelete] = useState<string | null>(null);
+
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -202,6 +237,57 @@ export default function SiteConfigManagement() {
             Personalize o nome, logo e cores do seu site
           </p>
         </div>
+        {/* Delete Confirmation Dialog for Logo */}
+        <AlertDialog open={logoToDelete !== null} onOpenChange={(open) => { if (!open) setLogoToDelete(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir logo do site</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir a logo do site? Esta ação remove o arquivo do bucket e limpará a referência no banco de dados.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleteFileMutation.isPending}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-red-600 hover:bg-red-700"
+                disabled={deleteFileMutation.isPending}
+                onClick={() => {
+                  if (!logoToDelete) return;
+                  deleteFileMutation.mutate(logoToDelete);
+                  setLogoToDelete(null);
+                }}
+              >
+                {deleteFileMutation.isPending ? 'Removendo...' : 'Excluir'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Delete Confirmation Dialog for Appointment Background */}
+        <AlertDialog open={appointmentBgToDelete !== null} onOpenChange={(open) => { if (!open) setAppointmentBgToDelete(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir imagem de agendamento</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir a imagem de fundo da seção de agendamento? Esta ação remove o arquivo do bucket e limpará a referência no banco de dados.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleteFileMutation.isPending}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-red-600 hover:bg-red-700"
+                disabled={deleteFileMutation.isPending}
+                onClick={() => {
+                  if (!appointmentBgToDelete) return;
+                  deleteFileMutation.mutate(appointmentBgToDelete);
+                  setAppointmentBgToDelete(null);
+                }}
+              >
+                {deleteFileMutation.isPending ? 'Removendo...' : 'Excluir'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <div className="grid gap-6">
           {/* Configuração Geral */}
@@ -343,7 +429,7 @@ export default function SiteConfigManagement() {
                 {/* Upload de nova logo */}
                 <div className="space-y-2">
                   <Label>Fazer Upload de Nova Logo</Label>
-                  <div className="flex items-center gap-4">
+                  <div className="flex flex-wrap items-center gap-3">
                     <input
                       type="file"
                       ref={fileInputRef}
@@ -365,6 +451,17 @@ export default function SiteConfigManagement() {
                       )}
                       Escolher Arquivo
                     </Button>
+                    { (config?.logoUrl || uploadedLogoUrl) && ( (uploadedLogoUrl || config?.logoUrl || '').startsWith('http') ) && (
+                      <Button
+                        variant="destructive"
+                        onClick={() => {
+                          const url = uploadedLogoUrl || config?.logoUrl || '';
+                          if (!url) return;
+                          setLogoToDelete(url);
+                        }}
+                        disabled={deleteFileMutation.isPending}
+                      >Excluir</Button>
+                    )}
                     <span className="text-sm text-muted-foreground">
                       PNG, JPG, WebP até 5MB
                     </span>
@@ -376,17 +473,19 @@ export default function SiteConfigManagement() {
                   <Label>Imagem de Fundo - Seção "Agende seu Horário"</Label>
                   <p className="text-xs text-muted-foreground">Personalize a seção de agendamento com uma imagem de fundo bonita!</p>
                   {config?.appointmentBackgroundImageBase64 && (
-                    <div className="mt-3 rounded-lg overflow-hidden border">
-                      <img 
-                        src={config.appointmentBackgroundImageBase64.startsWith('http')
-                          ? config.appointmentBackgroundImageBase64
-                          : `data:${config.appointmentBackgroundImageMimeType || 'image/png'};base64,${config.appointmentBackgroundImageBase64}`}
-                        alt="Imagem de fundo de agendamento"
-                        className="w-full h-32 object-cover"
-                      />
+                    <div className="mt-3 space-y-2">
+                      <div className="rounded-lg overflow-hidden border">
+                        <img 
+                          src={config.appointmentBackgroundImageBase64.startsWith('http')
+                            ? config.appointmentBackgroundImageBase64
+                            : `data:${config.appointmentBackgroundImageMimeType || 'image/png'};base64,${config.appointmentBackgroundImageBase64}`}
+                          alt="Imagem de fundo de agendamento"
+                          className="w-full h-32 object-cover"
+                        />
+                      </div>
                     </div>
                   )}
-                  <div className="flex items-center gap-4 mt-3">
+                  <div className="flex flex-wrap items-center gap-3 mt-3">
                     <input
                       type="file"
                       id="appointmentBgInput"
@@ -421,6 +520,15 @@ export default function SiteConfigManagement() {
                       )}
                       Escolher Imagem
                     </Button>
+                    {config.appointmentBackgroundImageBase64.startsWith('http') && (
+                      <Button
+                        variant="destructive"
+                        onClick={() => {
+                          setAppointmentBgToDelete(config.appointmentBackgroundImageBase64 as string);
+                        }}
+                        disabled={deleteFileMutation.isPending}
+                      >Excluir</Button>
+                    )}
                     <span className="text-sm text-muted-foreground">
                       PNG, JPG, WebP até 5MB
                     </span>

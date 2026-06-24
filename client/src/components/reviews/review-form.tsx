@@ -123,7 +123,11 @@ export default function ReviewForm() {
           key={`star-${i}`}
           type="button"
           className="text-3xl focus:outline-none transition-colors duration-200 mx-1 hover:scale-110"
-          onClick={() => form.setValue("rating", i, { shouldValidate: true })}
+          onClick={() => {
+            const currentRating = form.getValues("rating");
+            const nextRating = currentRating === i ? 0 : i;
+            form.setValue("rating", nextRating, { shouldValidate: true });
+          }}
           onMouseEnter={() => setHoveredStar(i)}
           onMouseLeave={() => setHoveredStar(0)}
         >
@@ -167,7 +171,19 @@ export default function ReviewForm() {
                 <FormItem>
                   <FormLabel>Avaliação</FormLabel>
                   <FormControl>
-                    <div className="flex text-yellow-400">{renderStars()}</div>
+                    <div className="flex flex-wrap items-center gap-3 text-yellow-400">
+                      {renderStars()}
+                      {form.watch("rating") > 0 && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="text-base px-3 py-1"
+                          onClick={() => form.setValue("rating", 0, { shouldValidate: true })}
+                        >
+                          Limpar
+                        </Button>
+                      )}
+                    </div>
                   </FormControl>
                   <FormDescription>
                     Clique nas estrelas para avaliar nosso serviço

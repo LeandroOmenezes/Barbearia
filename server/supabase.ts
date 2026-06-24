@@ -31,3 +31,11 @@ export async function uploadFileToSupabase(path: string, fileBuffer: Buffer, con
 
   return publicData.publicUrl;
 }
+
+export async function deleteFileFromSupabase(path: string) {
+  const { error } = await supabase.storage.from(SUPABASE_BUCKET).remove([path]);
+  if (error) {
+    throw error;
+  }
+  return true;
+}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -7,6 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 import { Camera, Upload, X, Save, Image as ImageIcon, ExternalLink, Eye } from "lucide-react";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
@@ -31,7 +41,7 @@ export default function BannerManagement() {
   });
 
   // Update form when banner data is loaded
-  useState(() => {
+  useEffect(() => {
     if (banner) {
       form.reset({
         title: banner.title,
@@ -109,6 +119,30 @@ export default function BannerManagement() {
       });
     },
   });
+
+  const deleteImageMutation = useMutation({
+    mutationFn: async (publicUrl: string) => {
+      const res = await fetch('/api/storage/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ publicUrl }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Erro ao deletar imagem');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: 'Imagem removida', description: 'Imagem do banner removida com sucesso' });
+      queryClient.invalidateQueries({ queryKey: ['/api/banner'] });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const [bannerToDelete, setBannerToDelete] = useState<string | null>(null);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -359,24 +393,35 @@ export default function BannerManagement() {
 
         {/* File Input */}
         <div className="space-y-4">
-          <label className="block">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-            <Button
-              variant="outline"
-              className="cursor-pointer"
-              asChild
-            >
-              <span>
-                <Upload className="w-4 h-4 mr-2" />
-                Escolher Imagem de Fundo
-              </span>
-            </Button>
-          </label>
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="block">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              <Button
+                variant="outline"
+                className="cursor-pointer"
+                asChild
+              >
+                <span>
+                  <Upload className="w-4 h-4 mr-2" />
+                  Escolher Imagem de Fundo
+                </span>
+              </Button>
+            </label>
+            {banner?.backgroundImage && banner.backgroundImage.startsWith('http') && (
+              <Button
+                variant="destructive"
+                onClick={() => setBannerToDelete(banner.backgroundImage as string)}
+                disabled={deleteImageMutation.isPending}
+              >
+                Excluir Imagem do Banner
+              </Button>
+            )}
+          </div>
 
           {/* Action Buttons */}
           {selectedFile && (
@@ -403,6 +448,33 @@ export default function BannerManagement() {
           </p>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog for Banner Image */}
+      <AlertDialog open={bannerToDelete !== null} onOpenChange={(open) => { if (!open) setBannerToDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir imagem do banner</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir a imagem do banner? Esta ação remove o arquivo do bucket e limpa a referência no banco de dados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteImageMutation.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              disabled={deleteImageMutation.isPending}
+              onClick={() => {
+                if (!bannerToDelete) return;
+                deleteImageMutation.mutate(bannerToDelete);
+                setBannerToDelete(null);
+              }}
+            >
+              {deleteImageMutation.isPending ? "Removendo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </div>
   );
 }

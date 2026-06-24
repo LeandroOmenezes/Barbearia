@@ -7,29 +7,18 @@ import { insertAppointmentSchema, insertSaleSchema, insertReviewSchema, insertBa
 import { ZodError } from "zod";
 import multer from "multer";
 import path from "path";
-import fs from "fs";
 import express from "express";
 import { uploadFileToSupabase } from "./supabase";
+import { uploadFileToSupabase, deleteFileFromSupabase } from "./supabase";
+import { db } from "./db";
+import { users, services, banner, siteConfig, professionals } from "@shared/schema";
+import { eq } from "drizzle-orm";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
-  const uploadsDir = path.join(process.cwd(), 'uploads');
-  if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-  }
-  
-  const storage_config = multer.diskStorage({
-    destination: (req, file, cb) => {
-      cb(null, uploadsDir);
-    },
-    filename: (req, file, cb) => {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-      cb(null, 'service-' + uniqueSuffix + path.extname(file.originalname));
-    }
-  });
   
   const upload = multer({
-    storage: storage_config,
+    storage: multer.memoryStorage(),
     limits: {
       fileSize: 5 * 1024 * 1024,
     },
@@ -45,8 +34,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
   });
-  
-  app.use('/uploads', express.static(uploadsDir));
   app.get("/api/clients", async (req: Request, res: Response) => {
     try {
       if (!req.isAuthenticated()) {
@@ -57,6 +44,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(clients);
     } catch (error) {
       res.status(500).json({ message: "Error fetching clients" });
+    }
+  });
+  
+  // Delete file from Supabase bucket and clear DB references
+  app.post("/api/storage/delete", express.json(), async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated() || !req.user?.isMaster) {
+        return res.status(403).json({ message: "Acesso negado. Apenas o master pode deletar arquivos." });
+      }
+
+      const { publicUrl, path: filePath } = req.body as { publicUrl?: string; path?: string };
+      if (!publicUrl && !filePath) {
+        return res.status(400).json({ message: "É necessário informar 'publicUrl' ou 'path'" });
+      }
+
+      let targetPath = filePath;
+      if (!targetPath && publicUrl) {
+        try {
+          const url = new URL(publicUrl);
+          // Try to extract path after '/object/public/<bucket>/'
+          const marker = `/object/public/${process.env.SUPABASE_BUCKET}/`;
+          const idx = url.pathname.indexOf(marker);
+          if (idx >= 0) {
+            targetPath = url.pathname.substring(idx + marker.length);
+          } else {
+            // fallback: find bucket segment and take what follows
+            const parts = url.pathname.split('/').filter(Boolean);
+            const bucketIndex = parts.indexOf(process.env.SUPABASE_BUCKET || "");
+            if (bucketIndex >= 0) {
+              targetPath = parts.slice(bucketIndex + 1).join('/');
+            } else {
+              // as last resort, take everything after the last '/'
+              targetPath = url.pathname.split('/').pop() || undefined;
+            }
+          }
+        } catch (err) {
+          return res.status(400).json({ message: "URL inválida" });
+        }
+      }
+
+      if (!targetPath) return res.status(400).json({ message: "Não foi possível determinar o caminho do arquivo" });
+
+      // Remove from Supabase
+      await deleteFileFromSupabase(targetPath);
+
+      // Clear DB references where the exact publicUrl is stored
+      if (publicUrl) {
+        await db.update(users).set({ profileImageBase64: null, profileImageMimeType: null }).where(eq(users.profileImageBase64, publicUrl));
+        await db.update(services).set({ imageUrl: null, imageDataBase64: null, imageMimeType: null }).where(eq(services.imageUrl, publicUrl));
+        await db.update(banner).set({ backgroundImage: null, backgroundImageDataBase64: null, backgroundImageMimeType: null }).where(eq(banner.backgroundImage, publicUrl));
+        await db.update(siteConfig).set({ logoUrl: null }).where(eq(siteConfig.logoUrl, publicUrl));
+        await db.update(siteConfig).set({ appointmentBackgroundImageBase64: null, appointmentBackgroundImageMimeType: null }).where(eq(siteConfig.appointmentBackgroundImageBase64, publicUrl));
+        await db.update(professionals).set({ photoBase64: null, photoMimeType: null }).where(eq(professionals.photoBase64, publicUrl));
+      }
+
+      res.json({ message: "Arquivo removido do bucket e referências limpas" });
+    } catch (error) {
+      console.error("Erro ao deletar arquivo do bucket:", error);
+      res.status(500).json({ message: "Erro ao deletar arquivo", error: error instanceof Error ? error.message : String(error) });
     }
   });
   
@@ -220,15 +266,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Nenhuma imagem foi enviada" });
       }
 
-      // Read the file and convert to base64
-      const imageBuffer = fs.readFileSync(req.file.path);
+      const imageBuffer = req.file.buffer;
       const mimeType = req.file.mimetype;
       const ext = path.extname(req.file.originalname).toLowerCase() || ".jpg";
       const uploadPath = `services/service-${serviceId}-${Date.now()}${ext}`;
       const publicUrl = await uploadFileToSupabase(uploadPath, imageBuffer, mimeType);
-
-      // Remove the temporary uploaded file
-      fs.unlinkSync(req.file.path);
 
       const updatedService = await storage.updateServiceImage(serviceId, publicUrl);
       
@@ -242,15 +284,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         imageUrl: updatedService.imageUrl || publicUrl
       });
     } catch (error) {
-      
-      // Remove the uploaded file if an error occurred
-      if (req.file) {
-        try {
-          fs.unlinkSync(req.file.path);
-        } catch (unlinkError) {
-          
-        }
-      }
       res.status(500).json({ message: "Erro ao fazer upload da imagem" });
     }
   });
@@ -1290,19 +1323,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Read the file and convert to base64
-      const imageBuffer = fs.readFileSync(req.file.path);
+      const imageBuffer = req.file.buffer;
       const mimeType = req.file.mimetype;
       const ext = path.extname(req.file.originalname).toLowerCase() || ".jpg";
       const uploadPath = `banner/background-${Date.now()}${ext}`;
       const publicUrl = await uploadFileToSupabase(uploadPath, imageBuffer, mimeType);
-
-      try { fs.unlinkSync(req.file.path); } catch (_) {}
       
-      const updatedBanner = await storage.updateBannerImage(publicUrl);
-      
-      if (!updatedBanner) {
-        return res.status(404).json({ message: "Configuração de banner não encontrada" });
-      }
+      const currentBanner = await storage.getBanner();
+      const updatedBanner = await storage.updateBanner({
+        title: currentBanner?.title || "Bem-vindo",
+        subtitle: currentBanner?.subtitle || "Descubra nossos serviços",
+        ctaText: currentBanner?.ctaText || "Agendar",
+        ctaLink: currentBanner?.ctaLink || "/",
+        backgroundImage: publicUrl,
+        backgroundImageDataBase64: null,
+        backgroundImageMimeType: null,
+        isActive: currentBanner?.isActive ?? true,
+      });
 
       res.json({
         message: "Imagem de fundo do banner salva no banco de dados",
@@ -1310,16 +1347,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         imageUrl: updatedBanner.backgroundImage || publicUrl
       });
     } catch (error) {
-      
-      // Remove the uploaded file if an error occurred
-      if (req.file) {
-        try {
-          fs.unlinkSync(req.file.path);
-        } catch (unlinkError) {
-          
-        }
-      }
-      res.status(500).json({ message: "Erro ao fazer upload da imagem do banner" });
+      console.error("Erro no upload do banner:", error);
+      res.status(500).json({ message: "Erro ao fazer upload da imagem do banner", error: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -1399,20 +1428,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Nenhuma imagem foi enviada" });
       }
 
-      // Convert the uploaded file to a Base64 data URL so it persists in the database
-      const fileBuffer = fs.readFileSync(req.file.path);
+      const fileBuffer = req.file.buffer;
       const mimeType = req.file.mimetype;
       const ext = path.extname(req.file.originalname).toLowerCase() || ".png";
       const uploadPath = `logo/logo-${Date.now()}${ext}`;
       const publicUrl = await uploadFileToSupabase(uploadPath, fileBuffer, mimeType);
-
-      try { fs.unlinkSync(req.file.path); } catch (_) {}
       
-      const updatedConfig = await storage.updateSiteLogo(publicUrl);
-      
-      if (!updatedConfig) {
-        return res.status(404).json({ message: "Configuração do site não encontrada" });
-      }
+      const currentConfig = await storage.getSiteConfig();
+      const updatedConfig = currentConfig
+        ? await storage.updateSiteLogo(publicUrl)
+        : await storage.updateSiteConfig({
+            siteName: "",
+            siteSlogan: undefined,
+            logoUrl: publicUrl,
+            primaryColor: "#3b82f6",
+            appointmentBackgroundImageBase64: undefined,
+            appointmentBackgroundImageMimeType: undefined,
+            pixKey: undefined,
+            pixBeneficiaryName: undefined,
+            pixCity: undefined,
+          });
 
       res.json({
         message: "Logo do site atualizada com sucesso",
@@ -1420,16 +1455,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         logoUrl: publicUrl
       });
     } catch (error) {
-      
-      // Remove the uploaded file if an error occurred
-      if (req.file) {
-        try {
-          fs.unlinkSync(req.file.path);
-        } catch (unlinkError) {
-          
-        }
-      }
-      res.status(500).json({ message: "Erro ao fazer upload da logo" });
+      console.error("Erro no upload da logo:", error);
+      res.status(500).json({ message: "Erro ao fazer upload da logo", error: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -1444,24 +1471,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Nenhuma imagem foi enviada" });
       }
 
-      const fileBuffer = fs.readFileSync(req.file.path);
+      const fileBuffer = req.file.buffer;
       const mimeType = req.file.mimetype;
       const ext = path.extname(req.file.originalname).toLowerCase() || ".png";
       const uploadPath = `appointment-backgrounds/appointment-${Date.now()}${ext}`;
       const publicUrl = await uploadFileToSupabase(uploadPath, fileBuffer, mimeType);
-
-      try { fs.unlinkSync(req.file.path); } catch (_) {}
       
       const config = await storage.getSiteConfig();
-      if (!config) {
-        return res.status(404).json({ message: "Configuração do site não encontrada" });
-      }
-
       const updatedConfig = await storage.updateSiteConfig({
-        siteName: config.siteName,
-        siteSlogan: config.siteSlogan || undefined,
-        logoUrl: config.logoUrl || undefined,
-        primaryColor: config.primaryColor || undefined,
+        siteName: config?.siteName || "",
+        siteSlogan: config?.siteSlogan || undefined,
+        logoUrl: config?.logoUrl || undefined,
+        primaryColor: config?.primaryColor || "#3b82f6",
         appointmentBackgroundImageBase64: publicUrl,
         appointmentBackgroundImageMimeType: mimeType,
       });
@@ -1471,10 +1492,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         config: updatedConfig,
       });
     } catch (error) {
-      if (req.file) {
-        try { fs.unlinkSync(req.file.path); } catch (_) {}
-      }
-      res.status(500).json({ message: "Erro ao fazer upload da imagem de fundo" });
+      console.error("Erro no upload de fundo de agendamento:", error);
+      res.status(500).json({ message: "Erro ao fazer upload da imagem de fundo", error: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -1570,12 +1589,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       if (!req.file) return res.status(400).json({ message: "Nenhuma foto enviada" });
       const id = parseInt(req.params.id);
-      const fileBuffer = fs.readFileSync(req.file.path);
+      const fileBuffer = req.file.buffer;
       const mimeType = req.file.mimetype;
       const ext = path.extname(req.file.originalname).toLowerCase() || ".png";
       const uploadPath = `professionals/photo-${id}-${Date.now()}${ext}`;
       const publicUrl = await uploadFileToSupabase(uploadPath, fileBuffer, mimeType);
-      fs.unlinkSync(req.file.path);
       const updated = await storage.uploadProfessionalPhoto(id, publicUrl, mimeType);
       if (!updated) return res.status(404).json({ message: "Profissional não encontrado" });
       res.json({ message: "Foto enviada com sucesso", professional: updated });
@@ -1684,7 +1702,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       // Ler o arquivo e converter para base64
-      const imageBuffer = fs.readFileSync(req.file.path);
+      const imageBuffer = req.file.buffer;
       const mimeType = req.file.mimetype;
       const ext = path.extname(req.file.originalname).toLowerCase() || ".png";
       const uploadPath = `profiles/user-${req.user.id}-${Date.now()}${ext}`;
@@ -1692,9 +1710,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Atualizar usuário no banco
       const updatedUser = await storage.updateUserProfileImage(req.user.id, publicUrl, mimeType);
-      
-      // Remover arquivo temporário
-      fs.unlinkSync(req.file.path);
 
       if (!updatedUser) {
         return res.status(404).json({ error: "Usuário não encontrado" });
@@ -1702,12 +1717,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ message: "Imagem de perfil atualizada com sucesso", user: updatedUser });
     } catch (error) {
-      
-      // Limpar arquivo temporário em caso de erro
-      if (req.file && fs.existsSync(req.file.path)) {
-        fs.unlinkSync(req.file.path);
-      }
-      res.status(500).json({ error: "Erro interno do servidor" });
+      console.error("Erro no upload de perfil:", error);
+      res.status(500).json({ error: "Erro ao fazer upload da imagem de perfil", details: error instanceof Error ? error.message : String(error) });
     }
   });
 
