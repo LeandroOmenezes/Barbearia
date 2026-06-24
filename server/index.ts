@@ -1,7 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { migrateImagesToBase64 } from "./migrate-images-to-base64";
 
 const app = express();
 app.use(express.json({ limit: "20mb" }));
