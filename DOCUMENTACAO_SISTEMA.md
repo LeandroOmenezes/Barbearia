@@ -1,281 +1,327 @@
-# Documentação Completa - Sistema de Gestão para Salão de Beleza
+# Documentação do Sistema Barbearia
 
 ## Índice
 
 1. [Visão Geral do Sistema](#visão-geral-do-sistema)
 2. [Arquitetura Técnica](#arquitetura-técnica)
 3. [Funcionalidades Principais](#funcionalidades-principais)
-4. [Público-alvo e Perfis de Acesso](#público-alvo-e-perfis-de-acesso)
-5. [Manual do Usuário](#manual-do-usuário)
+4. [Perfis de Acesso](#perfis-de-acesso)
+5. [Manual de Uso](#manual-de-uso)
 6. [Manual do Administrador](#manual-do-administrador)
 7. [API e Rotas Principais](#api-e-rotas-principais)
-8. [Configuração e Deployment](#configuração-e-deployment)
-9. [Troubleshooting](#troubleshooting)
-10. [Histórico de Atualizações](#histórico-de-atualizações)
+8. [Imagens e Upload](#imagens-e-upload)
+9. [Configuração e Deployment](#configuração-e-deployment)
+10. [Troubleshooting](#troubleshooting)
+11. [Histórico de Atualizações](#histórico-de-atualizações)
 
 ---
 
 ## Visão Geral do Sistema
 
-### Objetivo
-O **Ateliê de Beleza** é um sistema completo de gestão para salões de beleza, oferecendo controle de agendamentos, vendas, clientes, profissionais e personalização do site.
+O **Barbearia** é um sistema de gestão para salões de beleza que integra:
 
-### Benefícios
-- Gestão completa de serviços e agenda
-- Interface moderna e responsiva
-- Controle de usuários administrativos
-- Relatórios financeiros integrados
-- Personalização visual do site
+- agendamentos
+- cadastro de clientes
+- cadastro de profissionais
+- gestão de serviços e categorias
+- controle de preços
+- vendas e relatórios
+- avaliações e comentários
+- personalização do site
+- painel administrativo com permissões Master/Admin
+
+O objetivo é permitir que o salão controle operações internas e apresente uma homepage personalizada para clientes.
 
 ---
 
 ## Arquitetura Técnica
 
-### Stack Tecnológico
+### Frontend
 
-#### Frontend
-- React 18 com TypeScript
-- Vite como bundler
-- Tailwind CSS para estilo
-- Radix UI para componentes
+- React 18 + TypeScript
+- Vite
+- Tailwind CSS
+- Radix UI
 - Wouter para roteamento
-- React Query para cache e requisições
-- React Hook Form + Zod para formulários e validação
+- React Query para gerenciamento de dados
+- React Hook Form + Zod para validação de formulários
 
-#### Backend
-- Node.js com TypeScript
-- Express.js para API
-- Passport.js para autenticação
-- PostgreSQL para persistência
-- Drizzle ORM para queries
-- Nodemailer para envio de email
+### Backend
 
-#### Infraestrutura
-- Render para deployment
-- Supabase para PostgreSQL e serviços gerenciados
-- Armazenamento de imagens em Base64 no banco
+- Node.js + TypeScript
+- Express.js
+- Passport.js para autenticação local e Google OAuth
+- Drizzle ORM para PostgreSQL
+- Supabase como banco de dados e storage
+- Nodemailer para envio de emails
 
-### Estrutura de Pastas
-```
-├── client/
-│   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   ├── hooks/
-│   │   └── lib/
-├── server/
-│   ├── auth.ts
-│   ├── routes.ts
-│   ├── db.ts
-│   └── storage.ts
-├── shared/
-│   └── schema.ts
-└── uploads/
-```
+### Infraestrutura
+
+- Aplicação em Render / ambiente Node
+- Banco de dados PostgreSQL gerenciado
+- Imagens armazenadas em bucket Supabase
+- Rotas de upload e exclusão de imagens no servidor
+
+### Estrutura principal de pastas
+
+- `client/` — frontend React
+- `server/` — backend Express
+- `shared/` — schema e tipos compartilhados
+- `uploads/` — antigo diretório de imagens estáticas (geralmente não usado em produção)
 
 ---
 
 ## Funcionalidades Principais
 
 ### Autenticação
-- Login local com email/senha
-- Login com Google OAuth
-- Recuperação de senha por email
-- Edição de telefone e foto de perfil
-- Sessões seguras com cookies
 
-### Agendamentos
-- Horários de 40 minutos
-- Agendamento por data e profissional
-- Prevenção de conflitos de horário
-- Alteração de status de agendamento
-- Bloqueio de horários para férias ou manutenções
+- Cadastro de usuário
+- Login com email/senha
+- Login com Google OAuth
+- Logout
+- Recuperação de senha por email
+- Dados do usuário autenticado
 
 ### Clientes
-- Cadastro e edição de clientes no painel
-- Telefone formatado automaticamente
-- Histórico de agendamentos por cliente
-- Exclusão de clientes
 
-### Profissionais
-- Cadastro por categoria
-- Vinculação de login profissional
-- Ativar/desativar profissionais
-- Upload de foto de profissional
-- Configuração de horário de almoço
+- Listagem de clientes
+- Cadastro de novos clientes
+- Edição de cliente
+- Exclusão de cliente
 
 ### Serviços e Categorias
-- Cadastro de serviços com imagem
-- Marcação de serviço em destaque
-- Gestão de categorias separada
-- Exclusão de serviços e categorias
+
+- Listagem de categorias
+- Listagem de serviços por categoria
+- Destaque de serviços
+- Cadastro/edição/exclusão de serviços
+- Upload de imagem para serviço
+- Cadastro/edição/exclusão de categorias
 
 ### Preços
-- Cadastro de itens de preço
-- Faixa mínima e máxima
-- Edição e remoção de preços
 
-### Usuários Administrativos
-- Criação de usuários Admin
-- Exclusão de usuários
-- Permissões Master/Admin
-- Acesso ao painel administrativo
+- Listagem de preços
+- Listagem de preços por categoria
+- Cadastro de itens de preço
+- Edição de itens de preço
+- Exclusão de itens de preço
+
+### Agendamentos
+
+- Consulta de horários disponíveis por data
+- Criação de agendamento
+- Listagem de agendamentos
+- Listagem de agendamentos próprios do cliente
+- Atualização de status de agendamento
+
+### Profissionais
+
+- Listagem de profissionais
+- Listagem de profissionais por categoria
+- Cadastro de profissionais (admin)
+- Edição de profissionais
+- Ativação/desativação de profissionais
+- Upload de foto do profissional
+- Painel profissional com agendamentos próprios
+- Marcação de atendimentos como vistos
 
 ### Avaliações e Interações
-- Publicação de reviews por clientes
-- Curtidas em reviews e comentários
-- Tipos de like: heart e thumbs
-- Exibição pública de avaliações
 
-### Personalização do Site
-- Configuração de nome, slogan e cor principal
-- Upload de logo e imagem de agendamento
-- Configuração de rodapé com contato e redes sociais
-- Personalização de banner e CTA
+- Listagem de avaliações públicas
+- Cadastro de review
+- Curtida em review por `heart` ou `thumbs`
+- Comentários em reviews
+- Curtida em comentário
+- Consulta de curtidas do usuário
+
+### Admin / Configurações do Site
+
+- Listagem e criação de usuários admin
+- Promoção/demissão de Master
+- Configuração de banner
+- Configuração de rodapé
+- Configuração de site (nome, slogan, cor)
+- Upload de logo
+- Upload de imagem de fundo da seção de agendamento
+- Regeneração de imagens
 
 ### Vendas e Relatórios
-- Registro manual de vendas
-- Relatórios financeiros por período
-- Histórico de vendas no dashboard
+
+- Cadastro de vendas
+- Listagem de vendas
+- Filtro de vendas por período
+- Cancelamento de venda
 
 ---
 
-## Público-alvo e Perfis de Acesso
+## Perfis de Acesso
 
 ### Cliente
-- Acesso à página pública e perfil
+
+- Acessa homepage pública
 - Agenda serviços
-- Visualiza histórico
-- Avalia serviços
+- Visualiza seus agendamentos
+- Realiza avaliações e curtidas
 
 ### Profissional
-- Visualiza agendamentos próprios
-- Marca atendimentos como vistos
-- Recebe agenda vinculada ao seu perfil
+
+- Acessa agenda pessoal
+- Marca atendimentos vistos
+- Visualiza conta vinculada ao perfil
 
 ### Admin
-- Acessa painel administrativo
-- Gerencia clientes, serviços, categorias, preços e profissionais
-- Controla agendamentos e vendas
+
+- Acessa dashboard administrativo
+- Gerencia clientes, serviços, categorias, preços, profissionais e vendas
+- Gerencia avaliações e comentários
+- Gerencia configurações de site
 
 ### Master
+
 - Todas as permissões de Admin
-- Cria e exclui outros usuários
-- Controla permissões de Master
+- Cria e exclui usuários Admin
+- Controla permissões Master
 
 ---
 
-## Manual do Usuário
+## Manual de Uso
 
-### Criar Conta
-1. Acesse a página de login
-2. Clique em cadastrar
+### Cadastro de Conta
+
+1. Acesse `/auth`
+2. Selecione cadastro
 3. Preencha nome, email, telefone e senha
 4. Envie o formulário
 
 ### Login
-- Com email e senha
-- Ou com Google OAuth
 
-### Agendar Serviço
+- Via email/senha em `/auth`
+- Via Google OAuth em `/api/auth/google`
+
+### Agendamento
+
 1. Escolha serviço na home
-2. Selecione data e horário
-3. Preencha dados do cliente
+2. Selecione data e horário disponível
+3. Preencha dados de cliente
 4. Confirme o agendamento
 
-### Ver Agendamentos
-1. Faça login
-2. Vá ao perfil
-3. Veja agendamentos e status
+### Visualizar Agendamentos
 
-### Avaliar Serviço
-1. Acesse avaliações
+1. Faça login
+2. Acesse o perfil
+3. Consulte lista de agendamentos
+
+### Enviar Avaliação
+
+1. Abra seção de reviews
 2. Preencha nome, nota e comentário
-3. Envie avaliação
-4. Curta reviews
+3. Envie
+4. Curta outras avaliações
 
 ---
 
 ## Manual do Administrador
 
 ### Acesso ao Dashboard
-- Login com conta Admin ou Master
-- Navegação por abas
-- Painel com agendamentos, clientes, vendas, profissionais e usuários
 
-### Agendamentos
-- Ver todos os agendamentos
-- Filtrar por status ou profissional
-- Atualizar status
-- Cancelar agendamentos
+- Faça login com usuário Admin ou Master
+- Navegue com menu lateral pelos módulos
+- Acesse dashboard, clientes, profissionais, serviços, categorias, preços, vendas e configurações
 
-### Clientes
-- Adicionar, editar e excluir clientes
-- Telefone com máscara automática
-- Search e listagem completa
+### Gerenciar Clientes
 
-### Profissionais
-- Criar e editar profissionais
-- Vincular usuário ao profissional
-- Ativar ou desativar
+- Adicionar clientes
+- Editar clientes
+- Excluir clientes
+- Pesquisar cliente
+
+### Gerenciar Serviços
+
+- Criar serviço com título, descrição, duração e valor
+- Upload de imagem do serviço
+- Marcar como destaque
+- Editar serviço
+- Excluir serviço
+
+### Gerenciar Categorias
+
+- Criar categoria
+- Editar categoria
+- Excluir categoria
+
+### Gerenciar Preços
+
+- Adicionar item de preço
+- Editar valor mínimo e máximo
+- Excluir item de preço
+
+### Gerenciar Profissionais
+
+- Criar profissional
+- Editar informações
+- Ativar ou desativar perfil
 - Upload de foto
 
-### Serviços
-- Adicionar serviço com imagem
-- Marcar serviço como destaque
-- Editar e excluir serviços
+### Gerenciar Usuários
 
-### Categorias
-- Criar, editar e deletar categorias
-- Organizar serviços por categoria
-
-### Preços
-- Adicionar itens de preço
-- Definir valores mínimo e máximo
-- Excluir itens
-
-### Usuários do Sistema
 - Criar usuários Admin
+- Promover/demitir Master
 - Excluir usuários
-- Promover e demitir Master
-- Salvar permissões de acesso
 
 ### Configuração do Site
-- Alterar nome, slogan e cor principal
-- Upload de logo
-- Configurar links de redes sociais
-- Atualizar informações de contato no rodapé
 
-### Banner
-- Personalizar título, descrição e botão
-- Upload de imagem de fundo
-- Link de CTA configurável
+- Atualizar nome do site e slogan
+- Ajustar cor principal
+- Upload de logo
+- Upload de imagem de fundo do agendamento
+- Configurar links do rodapé e contato
+
+### Banner e Footer
+
+- Editar título e descrição do banner
+- Atualizar botão de CTA
+- Upload de imagem de banner
+- Editar contato e redes sociais no footer
 
 ### Vendas e Relatórios
+
 - Registrar vendas no painel
-- Consultar relatórios por período
-- Visualizar receita e desempenho
+- Consultar histórico de vendas
+- Filtrar por período
+- Cancelar vendas quando necessário
 
 ---
 
 ## API e Rotas Principais
 
 ### Autenticação
+
+- `POST /api/register`
+- `POST /api/login`
+- `POST /api/logout`
+- `GET /api/user`
+- `GET /api/auth/google`
+- `GET /api/auth/google/callback`
+- `GET /api/auth/google/debug`
 - `POST /api/forgot-password`
 - `GET /api/reset-password/:token`
 - `POST /api/reset-password/:token`
 
 ### Clientes
+
 - `GET /api/clients`
+- `GET /api/clients/:id`
 - `POST /api/clients`
 - `PATCH /api/clients/:id`
 - `DELETE /api/clients/:id`
 
-### Serviços e Categorias
+### Categorias e Serviços
+
 - `GET /api/categories`
 - `GET /api/services/all`
 - `GET /api/services/featured`
 - `GET /api/services/:categoryId`
+- `POST /api/services/:id/upload-image`
 - `POST /api/admin/services`
 - `PUT /api/admin/services/:id`
 - `PATCH /api/admin/services/:id/featured`
@@ -285,6 +331,7 @@ O **Ateliê de Beleza** é um sistema completo de gestão para salões de beleza
 - `DELETE /api/admin/categories/:id`
 
 ### Preços
+
 - `GET /api/prices`
 - `GET /api/prices/:categoryId`
 - `POST /api/admin/prices`
@@ -292,6 +339,7 @@ O **Ateliê de Beleza** é um sistema completo de gestão para salões de beleza
 - `DELETE /api/admin/prices/:id`
 
 ### Agendamentos
+
 - `GET /api/appointments/available-times/:date`
 - `POST /api/appointments`
 - `GET /api/appointments`
@@ -299,6 +347,7 @@ O **Ateliê de Beleza** é um sistema completo de gestão para salões de beleza
 - `PATCH /api/appointments/:id/status`
 
 ### Profissionais
+
 - `GET /api/professionals`
 - `GET /api/professionals/category/:categoryId`
 - `POST /api/admin/professionals`
@@ -308,20 +357,22 @@ O **Ateliê de Beleza** é um sistema completo de gestão para salões de beleza
 - `POST /api/professionals/:id/upload-photo`
 
 ### Reviews e Comentários
+
 - `GET /api/reviews`
 - `POST /api/reviews`
 - `POST /api/reviews/:id/like/:likeType`
+- `GET /api/user/likes`
 - `GET /api/reviews/:reviewId/comments`
 - `POST /api/reviews/:reviewId/comments`
 - `POST /api/comments/:commentId/like/:likeType`
-- `GET /api/user/likes`
 - `GET /api/user/comment-likes`
 
-### Admin / Configurações
+### Admin e Configurações
+
 - `GET /api/admin/users`
 - `POST /api/admin/users`
-- `DELETE /api/admin/users/:id`
 - `PATCH /api/admin/users/:id/master`
+- `DELETE /api/admin/users/:id`
 - `GET /api/banner`
 - `PUT /api/banner`
 - `POST /api/banner/upload-image`
@@ -334,15 +385,29 @@ O **Ateliê de Beleza** é um sistema completo de gestão para salões de beleza
 - `GET /api/schedule-blocks`
 - `POST /api/schedule-blocks`
 - `DELETE /api/schedule-blocks/:id`
-- `POST /api/admin/regenerate-images`
 - `PATCH /api/user/phone`
 - `POST /api/user/upload-profile-image`
+- `GET /api/user/test-auth`
+- `GET /api/images/user/:id`
+- `GET /api/images/service/:id`
+- `GET /api/images/banner`
+- `POST /api/storage/delete`
+- `POST /api/admin/regenerate-images`
+
+---
+
+## Imagens e Upload
+
+- O sistema salva imagens no bucket Supabase usando `uploadFileToSupabase`
+- As URLs públicas são armazenadas no banco e exibidas no frontend
+- As imagens podem ser excluídas do bucket usando `deleteFileFromSupabase`
+- Os scripts legados de `/uploads/...` foram removidos do código principal
 
 ---
 
 ## Configuração e Deployment
 
-### Variáveis de Ambiente
+### Variáveis de ambiente principais
 
 ```env
 DATABASE_URL=postgresql://user:password@host:port/database
@@ -351,84 +416,59 @@ GOOGLE_CLIENT_ID=seu_google_client_id
 GOOGLE_CLIENT_SECRET=seu_google_client_secret
 EMAIL_USER=seu_email@gmail.com
 EMAIL_PASS=sua_senha_de_aplicativo
+SUPABASE_URL=https://...supabase.co
+SUPABASE_SERVICE_KEY=seu_service_role_key
+SUPABASE_BUCKET=public
 ```
 
-### Deploy no Replit
+### Comandos úteis
 
-1. Clone o repositório
-2. Configure variáveis de ambiente
-3. Provisione o banco PostgreSQL
-4. Execute `npm install`
-5. Execute `npm run db:push`
-6. Execute `npm run dev`
+- `npm install`
+- `npm run dev`
+- `npm run build`
+- `npm run start`
+- `npm run db:push`
 
-### Configuração de Google OAuth
+### Deploy
 
-1. Acesse Google Cloud Console
-2. Crie credenciais OAuth 2.0
-3. Adicione origem JavaScript
-4. Adicione redirect URI `/api/auth/google/callback`
+1. Configure variáveis de ambiente no servidor
+2. Configure PostgreSQL e Supabase corretamente
+3. Execute `npm install`
+4. Execute `npm run db:push` quando necessário
+5. Execute `npm run build` e `npm run start`
 
-### Configuração de Email
-
-**Gmail:**
-- Ative verificação em 2 etapas
-- Gere senha de aplicativo
-- Utilize no `EMAIL_PASS`
- 
 ---
 
 ## Troubleshooting
 
-### Problemas Comuns
+### Erro de autenticação Google
 
-#### Erro de autenticação Google
-- Verifique redirect URI no Google Cloud
-- Confirme URL da aplicação
-- Aguarde propagação
+- Verifique credenciais Google OAuth
+- Confira callback URI no Google Cloud
+- Garanta que a URL de aplicação esteja correta
 
-#### Emails não enviados
-- Confira credenciais SMTP
+### Problemas de email
+
+- Confirme `EMAIL_USER` e `EMAIL_PASS`
 - Use senha de aplicativo do Gmail
-- Verifique as configurações de SMTP e credenciais do Gmail
+- Verifique o envio SMTP
 
-#### Imagens não carregam
-- Execute `/api/admin/regenerate-images`
-- Refaça upload se necessário
+### Imagens não carregam
 
-#### Agendamentos duplicados
-- Verifique bloqueios de agenda
-- Confirme horários válidos
+- Verifique configuração do bucket Supabase
+- Refaça uploads no painel
+- Valide rotas de imagem do backend
 
-#### Banco de dados não conecta
-- Verifique `DATABASE_URL`
-- Confirme que DB está disponível
-- Rode migrações
+### Agendamentos com conflito
+
+- Confira horários disponíveis
+- Ajuste bloqueios de agenda
+- Verifique se o profissional está ativo
 
 ---
 
 ## Histórico de Atualizações
 
-### Versão 2.1 (Junho 2026)
-- Permitido `Admin` criar e excluir usuários do sistema
-- Máscara de telefone nos formulários de clientes e rodapé
-- Suporte a likes `heart` e `thumbs` em comentários
-- Atualização da documentação e correções de TS
-
-### Versão 2.0 (Julho 2025)
-- Migração para PostgreSQL
-- Armazenamento de imagens em Base64
-- Interface de usuário aprimorada
-- Recuperação de senha por email
-- Google OAuth funcional
-
----
-
-## Contato
-
-**Desenvolvedor**: Leandro Menezes
-**Sistema**: Salão de Beleza - Gestão Completa
-**Tecnologia**: React + TypeScript + PostgreSQL
-
-*Documentação atualizada em: Junho 2026*
-*Versão do Sistema: 2.1*
+- `2026-06-24` — documentação atualizada com rotas reais e fluxo de upload no bucket Supabase
+- `2026-06-24` — scripts legados de migração e limpeza removidos do código principal
+- `2026-06-24` — documentados perfis Master, Admin, Profissional e Cliente
