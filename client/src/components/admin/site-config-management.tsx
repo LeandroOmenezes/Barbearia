@@ -28,9 +28,14 @@ import {
 
 const siteConfigFormSchema = insertSiteConfigSchema.extend({
   siteName: z.string().min(1, "Nome do site é obrigatório"),
-  siteSlogan: z.string().min(1, "Slogan do site é obrigatório"),
-  primaryColor: z.string().min(1, "Cor principal é obrigatória"),
-  logoUrl: z.string().optional()
+  siteSlogan: z.string().default(""),
+  primaryColor: z.string()
+    .refine(
+      (val) => val === "" || /^#[0-9A-Fa-f]{6}$/.test(val),
+      "Cor deve estar no formato #RRGGBB"
+    )
+    .default("#3b82f6"),
+  logoUrl: z.string().nullable().default(null)
 });
 
 export default function SiteConfigManagement() {
@@ -64,13 +69,13 @@ export default function SiteConfigManagement() {
   React.useEffect(() => {
     if (config) {
       form.reset({
-        siteName: config.siteName,
-        siteSlogan: config.siteSlogan,
-        primaryColor: config.primaryColor,
-        logoUrl: config.logoUrl,
-        pixKey: config.pixKey ?? "",
-        pixBeneficiaryName: config.pixBeneficiaryName ?? "",
-        pixCity: config.pixCity ?? "",
+        siteName: config.siteName || "",
+        siteSlogan: config.siteSlogan || "",
+        primaryColor: config.primaryColor || "#3b82f6",
+        logoUrl: config.logoUrl || "",
+        pixKey: config.pixKey || "",
+        pixBeneficiaryName: config.pixBeneficiaryName || "",
+        pixCity: config.pixCity || "",
       });
     }
   }, [config, form]);
@@ -520,7 +525,7 @@ export default function SiteConfigManagement() {
                       )}
                       Escolher Imagem
                     </Button>
-                    {config.appointmentBackgroundImageBase64.startsWith('http') && (
+                    {config && config.appointmentBackgroundImageBase64 && config.appointmentBackgroundImageBase64.startsWith('http') && (
                       <Button
                         variant="destructive"
                         onClick={() => {
@@ -637,7 +642,7 @@ export default function SiteConfigManagement() {
                         />
                       )}
                       <div>
-                        <h3 className="font-semibold" style={{ color: config.primaryColor }}>
+                        <h3 className="font-semibold" style={{ color: config.primaryColor || '#3b82f6' }}>
                           {config.siteName}
                         </h3>
                         <p className="text-sm text-muted-foreground">

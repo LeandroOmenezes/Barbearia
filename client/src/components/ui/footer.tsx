@@ -29,12 +29,12 @@ export default function Footer() {
     window.open(`https://wa.me/55${footer.whatsapp}?text=${message}`, '_blank');
   };
 
-  const socialLinks = [
+  const socialLinks: Array<{ url: string; icon: any; label: string; color: string }> = [
     { url: footer.facebookUrl, icon: Facebook, label: "Facebook", color: "hover:text-blue-500" },
     { url: footer.instagramUrl, icon: Instagram, label: "Instagram", color: "hover:text-pink-500" },
     { url: footer.tiktokUrl, icon: Music, label: "TikTok", color: "hover:text-white" },
     { url: footer.youtubeUrl, icon: Youtube, label: "YouTube", color: "hover:text-red-500" },
-  ].filter(link => link.url); // Only show links that have URLs
+  ].filter((link): link is { url: string; icon: any; label: string; color: string } => !!link.url);
 
   return (
     <footer className="bg-gray-900 text-white py-12">

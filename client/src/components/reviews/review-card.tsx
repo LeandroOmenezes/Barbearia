@@ -145,7 +145,7 @@ export default function ReviewCard({ review }: ReviewCardProps) {
         <div>
           <h3 className="text-lg font-bold text-gray-800">{review.clientName}</h3>
           <div className="flex text-yellow-400">
-            {renderStars(review.rating)}
+            {review.rating !== null && review.rating !== undefined ? renderStars(review.rating as number) : null}
           </div>
         </div>
       </div>

@@ -1,7 +1,7 @@
 <html>
  <head>
   <title>
-   Ateliê de Beleza
+   Barbearia
   </title>
   <script src="https://cdn.tailwindcss.com">
   </script>

@@ -13,7 +13,7 @@ export default function Header() {
   const { data: siteConfig } = useSiteConfig();
   const [location] = useLocation();
 
-  const { data: unseenData } = useQuery<{ count: number }>({
+  const { data: unseenData } = useQuery<{ count: number; isProfessional?: boolean }>({
     queryKey: ["/api/professional/unseen-count"],
     enabled: !!user,
     refetchInterval: 30000,

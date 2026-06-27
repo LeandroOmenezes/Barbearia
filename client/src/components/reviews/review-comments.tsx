@@ -124,8 +124,10 @@ export function ReviewComments({ reviewId }: ReviewCommentsProps) {
     likeCommentMutation.mutate({ commentId, likeType: 'heart' });
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("pt-BR", {
+  const formatDate = (dateString: string | Date | null | undefined): string => {
+    if (!dateString) return "";
+    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+    return date.toLocaleDateString("pt-BR", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",

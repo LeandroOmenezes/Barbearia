@@ -223,6 +223,22 @@ export class MemStorage implements IStorage {
 
     // Seed initial data
     this.seedInitialData();
+    
+    // Ensure master user has isMaster flag (fix for existing users)
+    this.ensureMasterFlag();
+  }
+
+  private async ensureMasterFlag() {
+    try {
+      const adminUser = await this.getUserByUsername("lleandro.m32@gmail.com");
+      if (adminUser && !adminUser.isMaster) {
+        console.log("🔧 Corrigindo flag isMaster do usuário master...");
+        await this.updateUser(adminUser.id, { isMaster: true });
+        console.log("✅ Flag isMaster corrigida com sucesso!");
+      }
+    } catch (error) {
+      console.warn("⚠️ Erro ao verificar/corrigir isMaster:", error);
+    }
   }
 
   private async seedInitialData() {
@@ -245,6 +261,7 @@ export class MemStorage implements IStorage {
           phone: "11900000000",
           email: "lleandro.m32@gmail.com",
           isAdmin: true,
+          isMaster: true,
         });
         
       }
@@ -371,6 +388,8 @@ export class MemStorage implements IStorage {
       ctaText: "Agendar Horário",
       ctaLink: "#appointments",
       backgroundImage: null,
+      backgroundImageDataBase64: null,
+      backgroundImageMimeType: null,
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -387,8 +406,8 @@ export class MemStorage implements IStorage {
       workingHours: "Segunda a Sexta: 9h às 18h | Sábado: 8h às 17h",
       facebookUrl: "https://facebook.com/salaopremium",
       instagramUrl: "https://instagram.com/salaopremium",
-      tiktokUrl: "",
-      youtubeUrl: "",
+      tiktokUrl: null,
+      youtubeUrl: null,
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -399,8 +418,13 @@ export class MemStorage implements IStorage {
       id: 1,
       siteName: "Salão de Beleza Premium",
       siteSlogan: "Transformando sua beleza com carinho e qualidade",
-      logoUrl: "",
+      logoUrl: null,
       primaryColor: "#3b82f6",
+      appointmentBackgroundImageBase64: null,
+      appointmentBackgroundImageMimeType: null,
+      pixKey: null,
+      pixBeneficiaryName: null,
+      pixCity: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -855,7 +879,6 @@ export class MemStorage implements IStorage {
       likes: insertReview.likes ?? 0,
       thumbsLikes: insertReview.thumbsLikes ?? 0,
       createdAt: now,
-      userProfileImageBase64: insertReview.userProfileImageBase64 ?? null,
     };
     this.reviews.set(id, review);
     return review;
@@ -969,14 +992,21 @@ export class MemStorage implements IStorage {
 
   async updateBanner(banner: InsertBanner): Promise<Banner> {
     const now = new Date();
-    this.bannerConfig = {
+    const updatedBanner: Banner = {
       id: 1,
-      ...banner,
+      title: banner.title,
+      subtitle: banner.subtitle,
+      ctaText: banner.ctaText,
+      ctaLink: banner.ctaLink,
+      backgroundImage: (banner.backgroundImage as string | null) || null,
+      backgroundImageDataBase64: (banner.backgroundImageDataBase64 as string | null) || null,
+      backgroundImageMimeType: (banner.backgroundImageMimeType as string | null) || null,
       isActive: true,
       createdAt: this.bannerConfig?.createdAt || now,
       updatedAt: now,
     };
-    return this.bannerConfig;
+    this.bannerConfig = updatedBanner;
+    return updatedBanner;
   }
 
   async updateBannerImage(
@@ -1020,6 +1050,10 @@ export class MemStorage implements IStorage {
     this.footerConfig = {
       id: 1,
       ...footer,
+      facebookUrl: footer.facebookUrl ?? null,
+      instagramUrl: footer.instagramUrl ?? null,
+      tiktokUrl: footer.tiktokUrl ?? null,
+      youtubeUrl: footer.youtubeUrl ?? null,
       isActive: true,
       createdAt: this.footerConfig?.createdAt || now,
       updatedAt: now,
@@ -1078,7 +1112,17 @@ export class MemStorage implements IStorage {
 
   async createScheduleBlock(block: InsertScheduleBlock): Promise<ScheduleBlock> {
     const id = Date.now();
-    const newBlock: ScheduleBlock = { id, ...block, description: block.description ?? null, createdAt: new Date() };
+    const newBlock: ScheduleBlock = {
+      id,
+      description: block.description ?? null,
+      professionalId: block.professionalId ?? null,
+      startTime: block.startTime ?? null,
+      endTime: block.endTime ?? null,
+      startDate: block.startDate,
+      endDate: block.endDate,
+      reason: block.reason,
+      createdAt: new Date(),
+    };
     return newBlock;
   }
 
@@ -1116,6 +1160,28 @@ export class MemStorage implements IStorage {
   async getAppointmentsByProfessionalId(professionalId: number): Promise<Appointment[]> { return []; }
   async getUnseenCountForProfessional(professionalId: number): Promise<number> { return 0; }
   async markAppointmentsSeenByProfessional(professionalId: number): Promise<void> {}
+
+  // Review Comments
+  async getReviewComments(reviewId: number): Promise<ReviewComment[]> { return []; }
+  async createReviewComment(comment: InsertReviewComment & { userId: number; userName: string }): Promise<ReviewComment> {
+    const id = Date.now();
+    return {
+      id: Number(id),
+      reviewId: comment.reviewId,
+      userId: comment.userId,
+      userName: comment.userName,
+      comment: comment.comment,
+      heartLikes: 0,
+      thumbsLikes: 0,
+      createdAt: new Date(),
+    };
+  }
+  async toggleLikeComment(commentId: number, userId: number, likeType: 'heart' | 'thumbs'): Promise<{ comment: ReviewComment; userLiked: boolean } | undefined> {
+    return undefined;
+  }
+  async getUserCommentLikes(userId: number): Promise<{ heartLikes: number[]; thumbsLikes: number[] }> {
+    return { heartLikes: [], thumbsLikes: [] };
+  }
 }
 
 const PostgresSessionStore = connectPg(session);

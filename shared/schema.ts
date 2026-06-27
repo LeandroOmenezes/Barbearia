@@ -267,14 +267,19 @@ export const siteConfig = pgTable("site_config", {
 
 export const insertSiteConfigSchema = createInsertSchema(siteConfig, {
   siteName: z.string().min(1, "Nome do site é obrigatório"),
-  siteSlogan: z.string().optional(),
-  logoUrl: z.string().optional(),
-  primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Cor deve estar no formato #RRGGBB").optional(),
-  appointmentBackgroundImageBase64: z.string().optional(),
-  appointmentBackgroundImageMimeType: z.string().optional(),
-  pixKey: z.string().optional(),
-  pixBeneficiaryName: z.string().optional(),
-  pixCity: z.string().optional(),
+  siteSlogan: z.string().default(""),
+  logoUrl: z.string().nullable().default(null),
+  primaryColor: z.string()
+    .refine(
+      (val) => val === "" || /^#[0-9A-Fa-f]{6}$/.test(val),
+      "Cor deve estar no formato #RRGGBB"
+    )
+    .default("#3b82f6"),
+  appointmentBackgroundImageBase64: z.string().nullable().default(null),
+  appointmentBackgroundImageMimeType: z.string().nullable().default(null),
+  pixKey: z.string().default(""),
+  pixBeneficiaryName: z.string().default(""),
+  pixCity: z.string().default(""),
 }).omit({ id: true, createdAt: true, updatedAt: true });
 
 // Types

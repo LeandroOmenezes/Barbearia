@@ -8,7 +8,6 @@ import { ZodError } from "zod";
 import multer from "multer";
 import path from "path";
 import express from "express";
-import { uploadFileToSupabase } from "./supabase";
 import { uploadFileToSupabase, deleteFileFromSupabase } from "./supabase";
 import { db } from "./db";
 import { users, services, banner, siteConfig, professionals } from "@shared/schema";
@@ -1397,22 +1396,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/site-config", async (req: Request, res: Response) => {
     try {
-      if (!req.isAuthenticated() || !req.user?.isMaster) {
+      console.log("🔍 PUT /api/site-config - Usuário:", {
+        id: req.user?.id,
+        username: req.user?.username,
+        isAdmin: req.user?.isAdmin,
+        isMaster: req.user?.isMaster,
+        isAuthenticated: req.isAuthenticated()
+      });
+
+      if (!req.isAuthenticated()) {
+        console.log("❌ Usuário não autenticado");
+        return res.status(401).json({ message: "Não autenticado" });
+      }
+
+      if (!req.user?.isMaster) {
+        console.log("❌ Usuário não é master");
         return res.status(403).json({ message: "Acesso negado. Apenas o master pode editar as configurações do site." });
       }
 
+      console.log("📊 Dados recebidos:", JSON.stringify(req.body, null, 2));
+
       const configData = insertSiteConfigSchema.parse(req.body);
+      console.log("✅ Dados validados:", JSON.stringify(configData, null, 2));
+
       const config = await storage.updateSiteConfig(configData);
+      console.log("💾 Configuração salva:", JSON.stringify(config, null, 2));
       
       res.json({
         message: "Configuração do site atualizada com sucesso",
         config
       });
     } catch (error) {
+      console.error("❌ Erro ao atualizar site-config:", error);
       
       if (error instanceof ZodError) {
-        res.status(400).json({ message: "Dados da configuração inválidos", errors: error.errors });
+        console.error("🔴 Erro de validação Zod:", error.errors);
+        res.status(400).json({ 
+          message: "Dados da configuração inválidos", 
+          errors: error.errors 
+        });
       } else {
+        console.error("🔴 Erro desconhecido:", error instanceof Error ? error.message : String(error));
         res.status(500).json({ message: "Erro ao atualizar configuração do site" });
       }
     }
@@ -1439,14 +1463,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? await storage.updateSiteLogo(publicUrl)
         : await storage.updateSiteConfig({
             siteName: "",
-            siteSlogan: undefined,
+            siteSlogan: "",
             logoUrl: publicUrl,
             primaryColor: "#3b82f6",
-            appointmentBackgroundImageBase64: undefined,
-            appointmentBackgroundImageMimeType: undefined,
-            pixKey: undefined,
-            pixBeneficiaryName: undefined,
-            pixCity: undefined,
+            appointmentBackgroundImageBase64: null,
+            appointmentBackgroundImageMimeType: null,
+            pixKey: "",
+            pixBeneficiaryName: "",
+            pixCity: "",
           });
 
       res.json({
@@ -1480,11 +1504,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const config = await storage.getSiteConfig();
       const updatedConfig = await storage.updateSiteConfig({
         siteName: config?.siteName || "",
-        siteSlogan: config?.siteSlogan || undefined,
-        logoUrl: config?.logoUrl || undefined,
+        siteSlogan: config?.siteSlogan || "",
+        logoUrl: config?.logoUrl || null,
         primaryColor: config?.primaryColor || "#3b82f6",
         appointmentBackgroundImageBase64: publicUrl,
         appointmentBackgroundImageMimeType: mimeType,
+        pixKey: config?.pixKey || "",
+        pixBeneficiaryName: config?.pixBeneficiaryName || "",
+        pixCity: config?.pixCity || "",
       });
 
       res.json({

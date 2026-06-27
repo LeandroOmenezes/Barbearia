@@ -98,10 +98,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   // Mutação para solicitar a recuperação de senha
-  const forgotPasswordMutation = useMutation({
+  const forgotPasswordMutation = useMutation<
+    { message: string; resetLink?: string; emailFailed?: boolean },
+    Error,
+    { email: string }
+  >({
     mutationFn: async ({ email }: { email: string }) => {
       const res = await apiRequest("POST", "/api/forgot-password", { email });
-      return await res.json() as { resetLink?: string; message?: string };
+      const data = await res.json() as { resetLink?: string; message?: string };
+      return {
+        message: data.message || "Link de recuperação enviado",
+        resetLink: data.resetLink,
+      };
     },
     onError: (error: Error) => {
       toast({
@@ -151,7 +159,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider
       value={{
-        user,
+        user: user ?? null,
         isLoading,
         error,
         loginMutation,
