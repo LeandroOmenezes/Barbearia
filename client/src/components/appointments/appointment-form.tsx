@@ -56,7 +56,7 @@ export default function AppointmentForm() {
     defaultValues: {
       name: user?.name || user?.username || "",
       email: user?.username || "",
-      phone: "",
+      phone: user?.phone || "",
       categoryId: "",
       serviceId: "",
       professionalId: "",
@@ -65,6 +65,16 @@ export default function AppointmentForm() {
       notes: "",
     },
   });
+
+  useEffect(() => {
+    if (user) {
+      form.setValue("name", user.name || user.username || "");
+      form.setValue("email", user.username || "");
+      if (user.phone) {
+        form.setValue("phone", user.phone);
+      }
+    }
+  }, [user, form]);
 
   const { data: categories } = useQuery<Category[]>({
     queryKey: ['/api/categories'],
