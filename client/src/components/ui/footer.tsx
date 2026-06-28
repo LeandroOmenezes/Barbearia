@@ -139,10 +139,15 @@ export default function Footer() {
         <div className="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
           <div className="space-y-2">
             <p className="text-sm">
-              Desenvolvido com <span className="text-red-400">♥</span> por{' '}
-              <span className="text-blue-400 font-medium hover:text-blue-300 transition-colors">
+              Desenvolvido por{' '}
+              <a
+                href="https://github.com/LeandroOmenezes"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-400 font-medium hover:text-blue-300 transition-colors"
+              >
                 Leandro Menezes
-              </span>
+              </a>
             </p>
             <p className="text-xs text-gray-500">
               Desenvolvedor Full Stack | React • Node.js • TypeScript | © 2026 Todos os direitos reservados
