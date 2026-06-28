@@ -36,13 +36,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/clients", async (req: Request, res: Response) => {
     try {
       if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Unauthorized" });
+        return res.status(401).json({ message: "Não autenticado" });
       }
       
       const clients = await storage.getClients();
       res.json(clients);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching clients" });
+      res.status(500).json({ message: "Erro ao buscar clientes" });
     }
   });
   
@@ -109,24 +109,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Only allow authenticated users
       if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Unauthorized" });
+        return res.status(401).json({ message: "Não autenticado" });
       }
       
       const id = parseInt(req.params.id);
       
       if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid client ID" });
+        return res.status(400).json({ message: "ID de cliente inválido" });
       }
       
       const client = await storage.getClientById(id);
       
       if (!client) {
-        return res.status(404).json({ message: "Client not found" });
+        return res.status(404).json({ message: "Cliente não encontrado" });
       }
       
       res.json(client);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching client" });
+      res.status(500).json({ message: "Erro ao buscar cliente" });
     }
   });
   
@@ -134,13 +134,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Only allow authenticated users
       if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Unauthorized" });
+        return res.status(401).json({ message: "Não autenticado" });
       }
       
       const { name, phone, email } = req.body;
       
       if (!name || !phone) {
-        return res.status(400).json({ message: "Name and phone are required" });
+        return res.status(400).json({ message: "Nome e telefone são obrigatórios" });
       }
       
       const client = await storage.createClient({ name, phone, email });
@@ -159,25 +159,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Only allow authenticated users
       if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Unauthorized" });
+        return res.status(401).json({ message: "Não autenticado" });
       }
       
       const id = parseInt(req.params.id);
       
       if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid client ID" });
+        return res.status(400).json({ message: "ID de cliente inválido" });
       }
       
       const { name, phone, email } = req.body;
       const client = await storage.updateClient(id, { name, phone, email });
       
       if (!client) {
-        return res.status(404).json({ message: "Client not found" });
+        return res.status(404).json({ message: "Cliente não encontrado" });
       }
       
       res.json(client);
     } catch (error) {
-      res.status(500).json({ message: "Error updating client" });
+      res.status(500).json({ message: "Erro ao atualizar cliente" });
     }
   });
   
@@ -185,24 +185,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Only allow authenticated users
       if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Unauthorized" });
+        return res.status(401).json({ message: "Não autenticado" });
       }
       
       const id = parseInt(req.params.id);
       
       if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid client ID" });
+        return res.status(400).json({ message: "ID de cliente inválido" });
       }
       
       const success = await storage.deleteClient(id);
       
       if (!success) {
-        return res.status(404).json({ message: "Client not found" });
+        return res.status(404).json({ message: "Cliente não encontrado" });
       }
       
       res.status(204).send();
     } catch (error) {
-      res.status(500).json({ message: "Error deleting client" });
+      res.status(500).json({ message: "Erro ao excluir cliente" });
     }
   });
   
@@ -212,7 +212,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const categories = await storage.getCategories();
       res.json(categories);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching categories" });
+      res.status(500).json({ message: "Erro ao buscar categorias" });
     }
   });
   
@@ -222,7 +222,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const services = await storage.getServices();
       res.json(services);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching services" });
+      res.status(500).json({ message: "Erro ao buscar serviços" });
     }
   });
   
@@ -231,7 +231,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const services = await storage.getFeaturedServices();
       res.json(services);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching featured services" });
+      res.status(500).json({ message: "Erro ao buscar serviços em destaque" });
     }
   });
   
@@ -239,13 +239,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const categoryId = parseInt(req.params.categoryId);
       if (isNaN(categoryId)) {
-        return res.status(400).json({ message: "Invalid category ID" });
+        return res.status(400).json({ message: "ID de categoria inválido" });
       }
       
       const services = await storage.getServicesByCategory(categoryId);
       res.json(services);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching services by category" });
+      res.status(500).json({ message: "Erro ao buscar serviços por categoria" });
     }
   });
 
@@ -477,7 +477,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const priceItems = await storage.getPriceItems();
       res.json(priceItems);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching price items" });
+      res.status(500).json({ message: "Erro ao buscar itens de preço" });
     }
   });
   
@@ -485,13 +485,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const categoryId = parseInt(req.params.categoryId);
       if (isNaN(categoryId)) {
-        return res.status(400).json({ message: "Invalid category ID" });
+        return res.status(400).json({ message: "ID de categoria inválido" });
       }
       
       const priceItems = await storage.getPriceItemsByCategory(categoryId);
       res.json(priceItems);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching price items by category" });
+      res.status(500).json({ message: "Erro ao buscar itens de preço por categoria" });
     }
   });
 
@@ -699,7 +699,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Verificar se o usuário está autenticado e é admin
       if (!req.isAuthenticated() || !req.user?.isAdmin) {
         
-        return res.status(401).json({ message: "Unauthorized" });
+        return res.status(401).json({ message: "Não autenticado" });
       }
       
       const appointments = await storage.getAppointments();
@@ -707,7 +707,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(appointments);
     } catch (error) {
       
-      res.status(500).json({ message: "Error fetching appointments" });
+      res.status(500).json({ message: "Erro ao buscar agendamentos" });
     }
   });
 
@@ -716,7 +716,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       if (!req.isAuthenticated()) {
         
-        return res.status(401).json({ message: "Unauthorized" });
+        return res.status(401).json({ message: "Não autenticado" });
       }
 
       const user = req.user as any;
@@ -731,7 +731,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(userAppointments);
     } catch (error) {
       
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "Erro interno do servidor" });
     }
   });
   
@@ -739,28 +739,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Only allow authenticated users
       if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Unauthorized" });
+        return res.status(401).json({ message: "Não autenticado" });
       }
       
       const id = parseInt(req.params.id);
       const { status } = req.body;
       
       if (isNaN(id) || !status) {
-        return res.status(400).json({ message: "Invalid request data" });
+        return res.status(400).json({ message: "Dados da requisição inválidos" });
       }
 
 
       const originalAppointment = await storage.getAppointmentById(id);
       
       if (!originalAppointment) {
-        return res.status(404).json({ message: "Appointment not found" });
+        return res.status(404).json({ message: "Agendamento não encontrado" });
       }
 
 
       const appointment = await storage.updateAppointmentStatus(id, status);
       
       if (!appointment) {
-        return res.status(404).json({ message: "Appointment not found" });
+        return res.status(404).json({ message: "Agendamento não encontrado" });
       }
 
 
@@ -959,7 +959,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/users", async (req: Request, res: Response) => {
     try {
       if (!req.isAuthenticated() || (!req.user?.isMaster && !req.user?.isAdmin)) {
-        return res.status(403).json({ message: "Access denied" });
+        return res.status(403).json({ message: "Acesso negado" });
       }
       
       const users = await storage.getUsers();
@@ -967,22 +967,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const safeUsers = users.map(({ password, ...user }) => user);
       res.json(safeUsers);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching users" });
+      res.status(500).json({ message: "Erro ao buscar usuários" });
     }
   });
 
   app.post("/api/admin/users", async (req: Request, res: Response) => {
     try {
       if (!req.isAuthenticated() || (!req.user?.isMaster && !req.user?.isAdmin)) {
-        return res.status(403).json({ message: "Access denied" });
+        return res.status(403).json({ message: "Acesso negado" });
       }
       
       const { username, password, name, phone, isAdmin } = req.body;
       
-      // Check if user already exists
+      // Verifica se o usuário já existe
       const existingUser = await storage.getUserByUsername(username);
       if (existingUser) {
-        return res.status(400).json({ message: "User already exists" });
+        return res.status(400).json({ message: "Usuário já existe" });
       }
       
       // Hash password and create user
@@ -999,48 +999,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { password: _, ...safeUser } = user;
       res.status(201).json(safeUser);
     } catch (error) {
-      res.status(500).json({ message: "Error creating user" });
+      res.status(500).json({ message: "Erro ao criar usuário" });
     }
   });
 
   app.patch("/api/admin/users/:id/master", async (req: Request, res: Response) => {
     try {
       if (!req.isAuthenticated() || !req.user?.isMaster) {
-        return res.status(403).json({ message: "Access denied" });
+        return res.status(403).json({ message: "Acesso negado" });
       }
       const id = parseInt(req.params.id);
-      if (isNaN(id)) return res.status(400).json({ message: "Invalid user ID" });
-      if (req.user?.id === id) return res.status(400).json({ message: "Cannot change your own master status" });
+      if (isNaN(id)) return res.status(400).json({ message: "ID de usuário inválido" });
+      if (req.user?.id === id) return res.status(400).json({ message: "Não é possível alterar seu próprio status master" });
       const { isMaster } = req.body;
-      if (typeof isMaster !== "boolean") return res.status(400).json({ message: "isMaster must be boolean" });
+      if (typeof isMaster !== "boolean") return res.status(400).json({ message: "O campo isMaster deve ser booleano" });
       // Only a senior master (lower ID = created first) can demote another master
       const targetUser = await storage.getUser(id);
       if (targetUser?.isMaster && !isMaster && req.user!.id > id) {
         return res.status(403).json({ message: "Você não pode remover o acesso Master de um usuário mais antigo que você." });
       }
       const updated = await storage.updateUser(id, { isMaster });
-      if (!updated) return res.status(404).json({ message: "User not found" });
+      if (!updated) return res.status(404).json({ message: "Usuário não encontrado" });
       const { password: _, ...safeUser } = updated;
       res.json(safeUser);
     } catch (error) {
-      res.status(500).json({ message: "Error updating master status" });
+      res.status(500).json({ message: "Erro ao atualizar status master" });
     }
   });
 
   app.delete("/api/admin/users/:id", async (req: Request, res: Response) => {
     try {
       if (!req.isAuthenticated() || (!req.user?.isMaster && !req.user?.isAdmin)) {
-        return res.status(403).json({ message: "Access denied" });
+        return res.status(403).json({ message: "Acesso negado" });
       }
       
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid user ID" });
+        return res.status(400).json({ message: "ID de usuário inválido" });
       }
       
       // Prevent deleting own account
       if (req.user?.id === id) {
-        return res.status(400).json({ message: "Cannot delete your own account" });
+        return res.status(400).json({ message: "Não é possível excluir sua própria conta" });
       }
 
       // Prevent deleting master users (must demote first)
@@ -1051,12 +1051,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const deleted = await storage.deleteUser(id);
       if (!deleted) {
-        return res.status(404).json({ message: "User not found" });
+        return res.status(404).json({ message: "Usuário não encontrado" });
       }
       
-      res.json({ message: "User deleted successfully" });
+      res.json({ message: "Usuário excluído com sucesso" });
     } catch (error) {
-      res.status(500).json({ message: "Error deleting user" });
+      res.status(500).json({ message: "Erro ao excluir usuário" });
     }
   });
 
@@ -1065,7 +1065,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Only allow authenticated users
       if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Unauthorized" });
+        return res.status(401).json({ message: "Não autenticado" });
       }
       
       const saleData = insertSaleSchema.parse(req.body);
@@ -1073,9 +1073,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(sale);
     } catch (error) {
       if (error instanceof ZodError) {
-        res.status(400).json({ message: "Invalid sale data", errors: error.errors });
+        res.status(400).json({ message: "Dados de venda inválidos", errors: error.errors });
       } else {
-        res.status(500).json({ message: "Error creating sale" });
+        res.status(500).json({ message: "Erro ao criar venda" });
       }
     }
   });
@@ -1084,44 +1084,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Only allow authenticated users
       if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Unauthorized" });
+        return res.status(401).json({ message: "Não autenticado" });
       }
       
       const sales = await storage.getSales();
       res.json(sales);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching sales" });
+      res.status(500).json({ message: "Erro ao buscar vendas" });
     }
   });
   
   app.patch("/api/sales/:id", async (req: Request, res: Response) => {
     try {
       if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Unauthorized" });
+        return res.status(401).json({ message: "Não autenticado" });
       }
       const id = parseInt(req.params.id);
-      if (isNaN(id)) return res.status(400).json({ message: "Invalid sale id" });
+      if (isNaN(id)) return res.status(400).json({ message: "ID de venda inválido" });
       const sale = await storage.updateSale(id, req.body);
-      if (!sale) return res.status(404).json({ message: "Sale not found" });
+      if (!sale) return res.status(404).json({ message: "Venda não encontrada" });
       res.json(sale);
     } catch (error) {
-      res.status(500).json({ message: "Error updating sale" });
+      res.status(500).json({ message: "Erro ao atualizar venda" });
     }
   });
 
   app.patch("/api/sales/:id/cancel", async (req: Request, res: Response) => {
     try {
       if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Unauthorized" });
+        return res.status(401).json({ message: "Não autenticado" });
       }
       const id = parseInt(req.params.id);
-      if (isNaN(id)) return res.status(400).json({ message: "Invalid sale id" });
+      if (isNaN(id)) return res.status(400).json({ message: "ID de venda inválido" });
       const { reason } = req.body;
       const sale = await storage.cancelSale(id, reason);
-      if (!sale) return res.status(404).json({ message: "Sale not found" });
+      if (!sale) return res.status(404).json({ message: "Venda não encontrada" });
       res.json(sale);
     } catch (error) {
-      res.status(500).json({ message: "Error cancelling sale" });
+      res.status(500).json({ message: "Erro ao cancelar venda" });
     }
   });
 
@@ -1129,26 +1129,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Only allow authenticated users
       if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Unauthorized" });
+        return res.status(401).json({ message: "Não autenticado" });
       }
       
       const { startDate, endDate } = req.query;
       
       if (!startDate || !endDate) {
-        return res.status(400).json({ message: "Start date and end date are required" });
+        return res.status(400).json({ message: "Data de início e data de fim são obrigatórias" });
       }
       
       const start = new Date(startDate as string);
       const end = new Date(endDate as string);
       
       if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-        return res.status(400).json({ message: "Invalid date format" });
+        return res.status(400).json({ message: "Formato de data inválido" });
       }
       
       const sales = await storage.getSalesByDate(start, end);
       res.json(sales);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching filtered sales" });
+      res.status(500).json({ message: "Erro ao buscar vendas filtradas" });
     }
   });
 
@@ -1902,19 +1902,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/regenerate-images", async (req: Request, res: Response) => {
     try {
       if (!req.isAuthenticated() || !req.user?.isAdmin) {
-        return res.status(401).json({ message: "Unauthorized" });
+        return res.status(401).json({ message: "Não autenticado" });
       }
 
-      // LIMPEZA DESABILITADA PARA PROTEGER IMAGENS PERSONALIZADAS
-      
-      
       res.json({ 
         message: "Regeneração de imagens desabilitada para proteger suas imagens personalizadas",
         success: false,
         note: "Suas imagens estão protegidas e não serão removidas"
       });
     } catch (error) {
-      
       res.status(500).json({ message: "Erro ao processar regeneração de imagens" });
     }
   });
