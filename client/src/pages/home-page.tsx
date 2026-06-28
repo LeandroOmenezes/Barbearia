@@ -180,8 +180,13 @@ function Appointments() {
     queryKey: ['/api/site-config'],
   });
 
-  const backgroundImageUrl = config?.appointmentBackgroundImageBase64 
-    ? `url(${config.appointmentBackgroundImageBase64.startsWith('http') ? config.appointmentBackgroundImageBase64 : `data:${config.appointmentBackgroundImageMimeType || 'image/png'};base64,${config.appointmentBackgroundImageBase64}`})`
+  const appointmentBgValue = config?.appointmentBackgroundImageBase64?.toString().trim();
+  const appointmentBgMimeType = config?.appointmentBackgroundImageMimeType?.toString().trim() || 'image/png';
+
+  const backgroundImageUrl = appointmentBgValue
+    ? appointmentBgValue.startsWith('http')
+      ? `url(${appointmentBgValue})`
+      : `url(data:${appointmentBgMimeType};base64,${appointmentBgValue})`
     : "url('/images/client-area-bg.svg')";
 
   return (
