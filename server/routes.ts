@@ -1396,31 +1396,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/site-config", async (req: Request, res: Response) => {
     try {
-      console.log("🔍 PUT /api/site-config - Usuário:", {
-        id: req.user?.id,
-        username: req.user?.username,
-        isAdmin: req.user?.isAdmin,
-        isMaster: req.user?.isMaster,
-        isAuthenticated: req.isAuthenticated()
-      });
+      const isDev = process.env.NODE_ENV !== "production";
+      if (isDev) {
+        console.log("🔍 PUT /api/site-config - Usuário:", {
+          id: req.user?.id,
+          username: req.user?.username,
+          isAdmin: req.user?.isAdmin,
+          isMaster: req.user?.isMaster,
+          isAuthenticated: req.isAuthenticated()
+        });
+      }
 
       if (!req.isAuthenticated()) {
-        console.log("❌ Usuário não autenticado");
+        if (isDev) console.log("❌ Usuário não autenticado");
         return res.status(401).json({ message: "Não autenticado" });
       }
 
       if (!req.user?.isMaster) {
-        console.log("❌ Usuário não é master");
+        if (isDev) console.log("❌ Usuário não é master");
         return res.status(403).json({ message: "Acesso negado. Apenas o master pode editar as configurações do site." });
       }
 
-      console.log("📊 Dados recebidos:", JSON.stringify(req.body, null, 2));
+      if (isDev) console.log("📊 Dados recebidos:", JSON.stringify(req.body, null, 2));
 
       const configData = insertSiteConfigSchema.parse(req.body);
-      console.log("✅ Dados validados:", JSON.stringify(configData, null, 2));
+      if (isDev) console.log("✅ Dados validados:", JSON.stringify(configData, null, 2));
 
       const config = await storage.updateSiteConfig(configData);
-      console.log("💾 Configuração salva:", JSON.stringify(config, null, 2));
+      if (isDev) console.log("💾 Configuração salva:", JSON.stringify(config, null, 2));
       
       res.json({
         message: "Configuração do site atualizada com sucesso",

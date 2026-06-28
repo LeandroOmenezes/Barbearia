@@ -401,14 +401,14 @@ export default function ServiceManagement() {
     <div className="space-y-8">
       {/* Header */}
       <div className="border-b pb-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Gerenciamento de Serviços</h2>
             <p className="text-gray-600">
               Gerencie os serviços oferecidos pelo salão, organizados por categoria.
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3 justify-end">
             <a
               href="/"
               target="_blank"
