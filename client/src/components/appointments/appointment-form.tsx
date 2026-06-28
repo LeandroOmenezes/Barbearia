@@ -18,7 +18,8 @@ import { useAuth } from "@/hooks/use-auth";
 const appointmentFormSchema = z.object({
   name: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
   email: z.string().email({ message: "Email inválido" }),
-  phone: z.string().min(10, { message: "Telefone inválido" }),
+    // O telefone pode ser preenchido pelo perfil do usuário; validar em tempo de envio
+    phone: z.string().optional(),
   categoryId: z.string().min(1, { message: "Selecione uma categoria" }),
   serviceId: z.string().min(1, { message: "Selecione um serviço" }),
   professionalId: z.string().optional(),
@@ -196,7 +197,20 @@ export default function AppointmentForm() {
   });
 
   function onSubmit(data: AppointmentFormValues) {
-    createAppointmentMutation.mutate(data);
+    const finalData = { ...data } as AppointmentFormValues;
+
+    // Se o usuário estiver logado e não informou telefone válido, usar telefone do perfil
+    const hasValidPhone = finalData.phone && String(finalData.phone).replace(/\D/g, '').length >= 10;
+    if (!hasValidPhone) {
+      if (user?.phone) {
+        finalData.phone = user.phone;
+      } else {
+        toast({ title: "Telefone obrigatório", description: "Por favor, informe um telefone válido.", variant: "destructive" });
+        return;
+      }
+    }
+
+    createAppointmentMutation.mutate(finalData);
   }
 
   const formatPhoneForWhatsApp = (phone: string) => {
@@ -228,6 +242,17 @@ export default function AppointmentForm() {
       
       // Pega os valores atuais do formulário
       const values = form.getValues();
+
+      // Se não houver telefone válido no formulário, usar telefone do perfil (se existir)
+      const hasValidPhone = values.phone && String(values.phone).replace(/\D/g, '').length >= 10;
+      if (!hasValidPhone) {
+        if (user?.phone) {
+          values.phone = user.phone;
+        } else {
+          toast({ title: "Telefone obrigatório", description: "Por favor, informe um telefone válido antes de agendar pelo WhatsApp.", variant: "destructive" });
+          return;
+        }
+      }
       
       // Cria a mensagem para o WhatsApp
       let message = `Olá! Gostaria de agendar um horário para ${selectedService || "um serviço"} na categoria ${selectedCategoryName || "de beleza"}.\n\n`;
