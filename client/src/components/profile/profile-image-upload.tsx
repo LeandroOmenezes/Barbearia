@@ -48,7 +48,7 @@ export function ProfileImageUpload({
     return `Erro ${res.status}: ${res.statusText}`;
   };
 
-  const parseApiResponse = async <T>(res: Response): Promise<T> => {
+  const parseApiResponse = async <T,>(res: Response): Promise<T> => {
     const contentType = res.headers.get("content-type") || "";
     if (!contentType.includes("application/json")) {
       const text = await res.text().catch(() => null);
