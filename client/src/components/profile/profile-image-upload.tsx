@@ -30,28 +30,54 @@ export function ProfileImageUpload({
     lg: "h-24 w-24"
   };
 
+  const parseApiError = async (res: Response) => {
+    const contentType = res.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      const errorData = await res.json().catch(() => null);
+      return errorData?.error || errorData?.message || `Erro ${res.status}: ${res.statusText}`;
+    }
+
+    const text = await res.text().catch(() => null);
+    if (text) {
+      if (text.includes("<!DOCTYPE") || text.includes("<html")) {
+        return "Resposta inválida do servidor. Tente novamente mais tarde.";
+      }
+      return text;
+    }
+
+    return `Erro ${res.status}: ${res.statusText}`;
+  };
+
+  const parseApiResponse = async <T>(res: Response): Promise<T> => {
+    const contentType = res.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      const text = await res.text().catch(() => null);
+      if (text && (text.includes("<!DOCTYPE") || text.includes("<html"))) {
+        throw new Error("Resposta inválida do servidor. Tente novamente mais tarde.");
+      }
+      throw new Error(`Resposta inesperada do servidor: ${res.statusText}`);
+    }
+    return res.json();
+  };
+
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append('profileImage', file);
 
-      // Use fetch directly for file upload
-      
-      
-      
-      
       const res = await fetch("/api/user/upload-profile-image", {
         method: "POST",
         body: formData,
-        credentials: 'include', // Include session cookies
+        credentials: 'include',
       });
 
+      const data = await parseApiResponse<any>(res);
       if (!res.ok) {
-        const errorData = await res.json().catch(() => ({ error: 'Erro no servidor' }));
-        throw new Error(errorData.error || `Erro ${res.status}: ${res.statusText}`);
+        const errorMessage = (data as any)?.error || (data as any)?.message || `Erro ${res.status}: ${res.statusText}`;
+        throw new Error(errorMessage);
       }
 
-      return await res.json();
+      return data;
     },
     onSuccess: (data) => {
       
@@ -76,13 +102,50 @@ export function ProfileImageUpload({
       }, 500);
     },
     onError: (error: any) => {
-      
       toast({
         title: "Erro no upload",
         description: error.message || "Não foi possível fazer upload da imagem. Tente novamente.",
         variant: "destructive",
       });
       setImagePreview(null);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/user/profile-image", {
+        method: "DELETE",
+        credentials: 'include',
+      });
+
+      const data = await parseApiResponse<any>(res);
+      if (!res.ok) {
+        const errorMessage = (data as any)?.error || (data as any)?.message || `Erro ${res.status}: ${res.statusText}`;
+        throw new Error(errorMessage);
+      }
+
+      return data;
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Sucesso!",
+        description: "Imagem de perfil removida com sucesso",
+      });
+      if (data.user) {
+        queryClient.setQueryData(["/api/user"], data.user);
+      }
+      queryClient.invalidateQueries({ queryKey: ["/api/images/user"] });
+      setImagePreview(null);
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao remover",
+        description: error.message || "Não foi possível remover a imagem de perfil.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -181,16 +244,31 @@ export function ProfileImageUpload({
 
       {/* Botão de upload (para o próprio usuário) */}
       {canUpload && showUploadButton && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleButtonClick}
-          disabled={uploadMutation.isPending}
-          className="flex items-center space-x-1"
-        >
-          <Upload className="h-3 w-3" />
-          <span>{imageUrl ? "Trocar foto" : "Adicionar foto"}</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleButtonClick}
+            disabled={uploadMutation.isPending || deleteMutation.isPending}
+            className="flex items-center space-x-1"
+          >
+            <Upload className="h-3 w-3" />
+            <span>{imageUrl ? "Trocar foto" : "Adicionar foto"}</span>
+          </Button>
+
+          {imageUrl && (
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              onClick={() => deleteMutation.mutate()}
+              disabled={uploadMutation.isPending || deleteMutation.isPending}
+              className="flex items-center space-x-1"
+            >
+              <span>Excluir foto</span>
+            </Button>
+          )}
+        </div>
       )}
 
       {/* Input de arquivo oculto */}

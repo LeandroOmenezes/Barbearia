@@ -35,7 +35,8 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, data: Partial<User>): Promise<User | undefined>;
   updateUserPassword(id: number, password: string): Promise<User | undefined>;
-  updateUserProfileImage(id: number, imageUrl: string, mimeType: string): Promise<User | undefined>;
+  updateUserProfileImage(id: number, imageUrl: string | null, mimeType: string | null): Promise<User | undefined>;
+  deleteUserProfileImage(id: number): Promise<User | undefined>;
   deleteUser(id: number): Promise<boolean>;
 
   // Clients
@@ -1232,9 +1233,17 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
-  async updateUserProfileImage(id: number, imageUrl: string, mimeType: string): Promise<User | undefined> {
+  async updateUserProfileImage(id: number, imageUrl: string | null, mimeType: string | null): Promise<User | undefined> {
     const [user] = await db.update(users)
       .set({ profileImageBase64: imageUrl, profileImageMimeType: mimeType })
+      .where(eq(users.id, id))
+      .returning();
+    return user || undefined;
+  }
+
+  async deleteUserProfileImage(id: number): Promise<User | undefined> {
+    const [user] = await db.update(users)
+      .set({ profileImageBase64: null, profileImageMimeType: null })
       .where(eq(users.id, id))
       .returning();
     return user || undefined;

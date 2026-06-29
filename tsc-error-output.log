@@ -1,0 +1,78 @@
+client/src/components/profile/profile-image-upload.tsx(51,41): error TS1005: ',' expected.
+client/src/components/profile/profile-image-upload.tsx(51,52): error TS1005: ',' expected.
+client/src/components/profile/profile-image-upload.tsx(51,61): error TS1005: ',' expected.
+client/src/components/profile/profile-image-upload.tsx(51,62): error TS17008: JSX element 'T' has no corresponding closing tag.
+client/src/components/profile/profile-image-upload.tsx(51,66): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+client/src/components/profile/profile-image-upload.tsx(52,5): error TS1109: Expression expected.
+client/src/components/profile/profile-image-upload.tsx(54,7): error TS1109: Expression expected.
+client/src/components/profile/profile-image-upload.tsx(54,47): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+client/src/components/profile/profile-image-upload.tsx(55,36): error TS1003: Identifier expected.
+client/src/components/profile/profile-image-upload.tsx(55,70): error TS1003: Identifier expected.
+client/src/components/profile/profile-image-upload.tsx(55,76): error TS1002: Unterminated string literal.
+client/src/components/profile/profile-image-upload.tsx(56,9): error TS1109: Expression expected.
+client/src/components/profile/profile-image-upload.tsx(57,7): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+client/src/components/profile/profile-image-upload.tsx(59,5): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+client/src/components/profile/profile-image-upload.tsx(61,3): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+client/src/components/profile/profile-image-upload.tsx(64,15): error TS1005: '}' expected.
+client/src/components/profile/profile-image-upload.tsx(64,37): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+client/src/components/profile/profile-image-upload.tsx(65,7): error TS1109: Expression expected.
+client/src/components/profile/profile-image-upload.tsx(69,15): error TS1005: '}' expected.
+client/src/components/profile/profile-image-upload.tsx(72,7): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+client/src/components/profile/profile-image-upload.tsx(74,43): error TS17008: JSX element 'any' has no corresponding closing tag.
+client/src/components/profile/profile-image-upload.tsx(76,9): error TS1109: Expression expected.
+client/src/components/profile/profile-image-upload.tsx(78,7): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+client/src/components/profile/profile-image-upload.tsx(81,5): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+client/src/components/profile/profile-image-upload.tsx(82,24): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+client/src/components/profile/profile-image-upload.tsx(87,9): error TS1005: '}' expected.
+client/src/components/profile/profile-image-upload.tsx(91,59): error TS1005: '}' expected.
+client/src/components/profile/profile-image-upload.tsx(92,7): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+client/src/components/profile/profile-image-upload.tsx(95,47): error TS1005: '}' expected.
+client/src/components/profile/profile-image-upload.tsx(95,70): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+client/src/components/profile/profile-image-upload.tsx(100,22): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+client/src/components/profile/profile-image-upload.tsx(101,33): error TS1005: '}' expected.
+client/src/components/profile/profile-image-upload.tsx(102,7): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+client/src/components/profile/profile-image-upload.tsx(103,5): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+client/src/components/profile/profile-image-upload.tsx(104,28): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+client/src/components/profile/profile-image-upload.tsx(109,9): error TS1005: '}' expected.
+client/src/components/profile/profile-image-upload.tsx(111,5): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+client/src/components/profile/profile-image-upload.tsx(112,3): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+client/src/components/profile/profile-image-upload.tsx(115,15): error TS1005: '}' expected.
+client/src/components/profile/profile-image-upload.tsx(115,27): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+client/src/components/profile/profile-image-upload.tsx(116,7): error TS1109: Expression expected.
+client/src/components/profile/profile-image-upload.tsx(117,15): error TS1005: '}' expected.
+client/src/components/profile/profile-image-upload.tsx(119,7): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+client/src/components/profile/profile-image-upload.tsx(121,43): error TS17008: JSX element 'any' has no corresponding closing tag.
+client/src/components/profile/profile-image-upload.tsx(123,9): error TS1109: Expression expected.
+client/src/components/profile/profile-image-upload.tsx(125,7): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+client/src/components/profile/profile-image-upload.tsx(128,5): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+client/src/components/profile/profile-image-upload.tsx(129,24): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+client/src/components/profile/profile-image-upload.tsx(133,9): error TS1005: '}' expected.
+client/src/components/profile/profile-image-upload.tsx(135,59): error TS1005: '}' expected.
+client/src/components/profile/profile-image-upload.tsx(136,7): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+client/src/components/profile/profile-image-upload.tsx(137,47): error TS1005: '}' expected.
+client/src/components/profile/profile-image-upload.tsx(137,70): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+client/src/components/profile/profile-image-upload.tsx(139,22): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+client/src/components/profile/profile-image-upload.tsx(140,33): error TS1005: '}' expected.
+client/src/components/profile/profile-image-upload.tsx(141,7): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+client/src/components/profile/profile-image-upload.tsx(142,5): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+client/src/components/profile/profile-image-upload.tsx(143,28): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+client/src/components/profile/profile-image-upload.tsx(148,9): error TS1005: '}' expected.
+client/src/components/profile/profile-image-upload.tsx(149,5): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+client/src/components/profile/profile-image-upload.tsx(150,3): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+client/src/components/profile/profile-image-upload.tsx(152,54): error TS17008: JSX element 'HTMLInputElement' has no corresponding closing tag.
+client/src/components/profile/profile-image-upload.tsx(152,74): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+client/src/components/profile/profile-image-upload.tsx(153,5): error TS1109: Expression expected.
+client/src/components/profile/profile-image-upload.tsx(164,9): error TS1005: '}' expected.
+client/src/components/profile/profile-image-upload.tsx(166,5): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+client/src/components/profile/profile-image-upload.tsx(169,19): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+client/src/components/profile/profile-image-upload.tsx(174,9): error TS1005: '}' expected.
+client/src/components/profile/profile-image-upload.tsx(176,5): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+client/src/components/profile/profile-image-upload.tsx(180,26): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+client/src/components/profile/profile-image-upload.tsx(181,50): error TS1005: '}' expected.
+client/src/components/profile/profile-image-upload.tsx(182,5): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+client/src/components/profile/profile-image-upload.tsx(188,3): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+client/src/components/profile/profile-image-upload.tsx(190,33): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+client/src/components/profile/profile-image-upload.tsx(191,34): error TS1005: '}' expected.
+client/src/components/profile/profile-image-upload.tsx(192,3): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+client/src/components/profile/profile-image-upload.tsx(284,1): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+client/src/components/profile/profile-image-upload.tsx(284,2): error TS1005: '</' expected.

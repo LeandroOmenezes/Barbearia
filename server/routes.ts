@@ -1746,6 +1746,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/user/profile-image", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Login necessário" });
+    }
+
+    try {
+      const user = await storage.getUser(req.user.id);
+      if (!user) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+
+      const publicUrl = user.profileImageBase64;
+      if (publicUrl && publicUrl.startsWith('http')) {
+        try {
+          const url = new URL(publicUrl);
+          const marker = `/object/public/${process.env.SUPABASE_BUCKET}/`;
+          const idx = url.pathname.indexOf(marker);
+          const targetPath = idx >= 0
+            ? url.pathname.substring(idx + marker.length)
+            : url.pathname.split('/').filter(Boolean).slice((url.pathname.split('/').filter(Boolean).indexOf(process.env.SUPABASE_BUCKET || '') + 1)).join('/');
+          if (targetPath) {
+            await deleteFileFromSupabase(targetPath);
+          }
+        } catch (error) {
+          console.warn("Não foi possível remover arquivo antigo do Supabase", error);
+        }
+      }
+
+      const updatedUser = await storage.deleteUserProfileImage(req.user.id);
+      if (!updatedUser) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+
+      res.json({ message: "Imagem de perfil removida com sucesso", user: updatedUser });
+    } catch (error) {
+      console.error("Erro ao remover imagem de perfil:", error);
+      res.status(500).json({ error: "Erro ao remover a imagem de perfil", details: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
   // === Image Serving Routes ===
   
   // Serve user profile images from database
@@ -1909,7 +1949,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-
+  // Fallback JSON para rotas /api que não existirem
+  app.use("/api", (_req, res) => {
+    res.status(404).json({ error: "Endpoint da API não encontrado" });
+  });
 
   const httpServer = createServer(app);
   return httpServer;

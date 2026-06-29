@@ -102,16 +102,17 @@ export default function FooterManagement() {
               Personalize as informações de contato, endereço, horários e redes sociais do rodapé.
             </p>
           </div>
-          <a
-            href="/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-md"
-          >
-            <Eye className="w-4 h-4" />
-            <span>Ver na Home</span>
-            <ExternalLink className="w-4 h-4" />
-          </a>
+          <Button asChild className="flex items-center gap-2">
+            <a
+              href="/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Eye className="w-4 h-4" />
+              <span>Ver na Home</span>
+              <ExternalLink className="w-4 h-4" />
+            </a>
+          </Button>
         </div>
       </div>
 
@@ -400,15 +401,17 @@ export default function FooterManagement() {
                   {updateFooterMutation.isPending ? "Salvando..." : "Salvar Alterações"}
                 </Button>
                 
-                <a
-                  href="/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 transition-colors border"
-                >
-                  <Eye className="w-4 h-4" />
-                  <span>Visualizar</span>
-                </a>
+                <Button asChild className="flex-1 sm:flex-none">
+                  <a
+                    href="/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2"
+                  >
+                    <Eye className="w-4 h-4" />
+                    <span>Visualizar</span>
+                  </a>
+                </Button>
               </div>
             </form>
           </Form>

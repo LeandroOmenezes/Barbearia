@@ -161,16 +161,17 @@ export default function PriceManagement() {
             </p>
           </div>
           <div className="flex gap-3">
-            <a
-              href="/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-md"
-            >
-              <Eye className="w-4 h-4" />
-              <span>Ver na Home</span>
-              <ExternalLink className="w-4 h-4" />
-            </a>
+            <Button asChild className="flex items-center gap-2">
+              <a
+                href="/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Eye className="w-4 h-4" />
+                <span>Ver na Home</span>
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            </Button>
             <Button
               onClick={() => setShowAddForm(true)}
               className="flex items-center gap-2"
