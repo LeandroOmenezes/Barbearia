@@ -614,8 +614,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const dateBlocks = await storage.getBlocksForDate(date, professionalId);
       const fullDayBlock = dateBlocks.find(b => !b.startTime || !b.endTime);
 
-      // Criar lista de horários com status (verifica bloqueio por slot individual)
+      const [year, month, day] = date.split('-').map(Number);
+      const today = new Date();
+      const isSelectedDateToday =
+        year === today.getFullYear() &&
+        month === today.getMonth() + 1 &&
+        day === today.getDate();
+      const nowMinutes = today.getHours() * 60 + today.getMinutes();
+
       const timeSlots = allTimeSlots.map(time => {
+        const [hour, minute] = time.split(':').map(Number);
+        const slotMinutes = hour * 60 + minute;
+
+        if (isSelectedDateToday && slotMinutes <= nowMinutes) {
+          return { time, available: false, status: 'past' };
+        }
+
         if (bookedTimes.includes(time)) {
           return { time, available: false, status: 'occupied' };
         }
@@ -654,6 +668,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const appointmentData = insertAppointmentSchema.parse(req.body);
+
+      const [year, month, day] = appointmentData.date.split('-').map(Number);
+      const [hour, minute] = appointmentData.time.split(':').map(Number);
+      const appointmentDateTime = new Date(year, month - 1, day, hour, minute, 0);
+      const now = new Date();
+
+      if (appointmentDateTime <= now) {
+        return res.status(409).json({ message: "Este horário já passou e não pode ser agendado." });
+      }
 
       // Verificar se a data/horário está bloqueado (incluindo bloqueios parciais)
       const blockStatus = await storage.isDateBlocked(appointmentData.date, appointmentData.professionalId ?? null, appointmentData.time);

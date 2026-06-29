@@ -33,7 +33,7 @@ type AppointmentFormValues = z.infer<typeof appointmentFormSchema>;
 interface TimeSlot {
   time: string;
   available: boolean;
-  status: 'available' | 'occupied' | 'blocked' | 'lunch';
+  status: 'available' | 'occupied' | 'blocked' | 'lunch' | 'past';
 }
 
 interface AvailableTimesResponse {
@@ -526,28 +526,38 @@ export default function AppointmentForm() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-3 gap-2">
-                    {timeSlots?.filter(slot => slot.status !== 'lunch').map((slot) => (
-                      <button
-                        key={slot.time}
-                        type="button"
-                        onClick={() => slot.available && field.onChange(slot.time)}
-                        disabled={!slot.available}
-                        className={`
-                          px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-200
-                          ${field.value === slot.time 
-                            ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
-                            : slot.available 
-                              ? 'bg-green-50 text-green-700 border-green-200 hover:border-green-400 hover:bg-green-100 hover:shadow-sm'
-                              : 'bg-red-50 text-red-400 border-red-200 cursor-not-allowed'
-                          }
-                        `}
-                      >
-                        {slot.time}
-                        {!slot.available && (
-                          <div className="text-xs mt-1">Ocupado</div>
-                        )}
-                      </button>
-                    ))}
+                    {timeSlots?.filter(slot => slot.status !== 'lunch').map((slot) => {
+                      const slotLabel = !slot.available
+                        ? slot.status === 'occupied'
+                          ? 'Ocupado'
+                          : slot.status === 'past'
+                            ? 'Já passou'
+                            : 'Indisponível'
+                        : undefined;
+
+                      return (
+                        <button
+                          key={slot.time}
+                          type="button"
+                          onClick={() => slot.available && field.onChange(slot.time)}
+                          disabled={!slot.available}
+                          className={`
+                            px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-200
+                            ${field.value === slot.time 
+                              ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
+                              : slot.available 
+                                ? 'bg-green-50 text-green-700 border-green-200 hover:border-green-400 hover:bg-green-100 hover:shadow-sm'
+                                : 'bg-red-50 text-red-400 border-red-200 cursor-not-allowed'
+                            }
+                          `}
+                        >
+                          {slot.time}
+                          {!slot.available && (
+                            <div className="text-xs mt-1">{slotLabel}</div>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
                 <FormMessage />
