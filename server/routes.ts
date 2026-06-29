@@ -1396,34 +1396,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/site-config", async (req: Request, res: Response) => {
     try {
-      const isDev = process.env.NODE_ENV !== "production";
-      if (isDev) {
-        console.log("🔍 PUT /api/site-config - Usuário:", {
-          id: req.user?.id,
-          username: req.user?.username,
-          isAdmin: req.user?.isAdmin,
-          isMaster: req.user?.isMaster,
-          isAuthenticated: req.isAuthenticated()
-        });
-      }
-
       if (!req.isAuthenticated()) {
-        if (isDev) console.log("❌ Usuário não autenticado");
         return res.status(401).json({ message: "Não autenticado" });
       }
 
       if (!req.user?.isMaster) {
-        if (isDev) console.log("❌ Usuário não é master");
         return res.status(403).json({ message: "Acesso negado. Apenas o master pode editar as configurações do site." });
       }
 
-      if (isDev) console.log("📊 Dados recebidos:", JSON.stringify(req.body, null, 2));
-
-      const configData = insertSiteConfigSchema.parse(req.body);
-      if (isDev) console.log("✅ Dados validados:", JSON.stringify(configData, null, 2));
+      const existingConfig = await storage.getSiteConfig();
+      const configData = insertSiteConfigSchema.parse({
+        siteName: req.body.siteName ?? existingConfig?.siteName ?? "",
+        siteSlogan: req.body.siteSlogan ?? existingConfig?.siteSlogan ?? "",
+        logoUrl: req.body.logoUrl ?? existingConfig?.logoUrl ?? null,
+        primaryColor: req.body.primaryColor ?? existingConfig?.primaryColor ?? "#3b82f6",
+        appointmentBackgroundImageBase64: req.body.appointmentBackgroundImageBase64 ?? existingConfig?.appointmentBackgroundImageBase64 ?? null,
+        appointmentBackgroundImageMimeType: req.body.appointmentBackgroundImageMimeType ?? existingConfig?.appointmentBackgroundImageMimeType ?? null,
+        pixKey: req.body.pixKey ?? existingConfig?.pixKey ?? "",
+        pixBeneficiaryName: req.body.pixBeneficiaryName ?? existingConfig?.pixBeneficiaryName ?? "",
+        pixCity: req.body.pixCity ?? existingConfig?.pixCity ?? "",
+      });
 
       const config = await storage.updateSiteConfig(configData);
-      if (isDev) console.log("💾 Configuração salva:", JSON.stringify(config, null, 2));
       
       res.json({
         message: "Configuração do site atualizada com sucesso",

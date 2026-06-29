@@ -220,7 +220,12 @@ export default function SiteConfigManagement() {
   };
 
   const onSubmit = (data: z.infer<typeof siteConfigFormSchema>) => {
-    const { appointmentBackgroundImageBase64, appointmentBackgroundImageMimeType, ...safeData } = data as any;
+    const safeData = {
+      ...data,
+      logoUrl: config?.logoUrl ?? null,
+      appointmentBackgroundImageBase64: config?.appointmentBackgroundImageBase64 ?? null,
+      appointmentBackgroundImageMimeType: config?.appointmentBackgroundImageMimeType ?? null,
+    };
     updateConfigMutation.mutate(safeData);
   };
 
@@ -444,7 +449,6 @@ export default function SiteConfigManagement() {
                     />
                     <Button
                       type="button"
-                      variant="outline"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={isUploading || uploadLogoMutation.isPending}
                       className="flex items-center gap-2"
@@ -513,7 +517,6 @@ export default function SiteConfigManagement() {
                     />
                     <Button
                       type="button"
-                      variant="outline"
                       onClick={() => document.getElementById('appointmentBgInput')?.click()}
                       disabled={uploadAppointmentBgMutation.isPending}
                       className="flex items-center gap-2"
