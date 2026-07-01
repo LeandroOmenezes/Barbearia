@@ -542,7 +542,7 @@ export default function AppointmentForm() {
                           onClick={() => slot.available && field.onChange(slot.time)}
                           disabled={!slot.available}
                           className={`
-                            px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-200
+                            px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-200 flex flex-col items-center justify-center min-h-16
                             ${field.value === slot.time 
                               ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
                               : slot.available 
@@ -553,7 +553,7 @@ export default function AppointmentForm() {
                         >
                           {slot.time}
                           {!slot.available && (
-                            <div className="text-xs mt-1">{slotLabel}</div>
+                            <div className="text-xs leading-tight">{slotLabel}</div>
                           )}
                         </button>
                       );
