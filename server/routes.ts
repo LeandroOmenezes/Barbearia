@@ -616,17 +616,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const [year, month, day] = date.split('-').map(Number);
       const today = new Date();
-      const isSelectedDateToday =
-        year === today.getFullYear() &&
-        month === today.getMonth() + 1 &&
-        day === today.getDate();
+      const selectedDate = new Date(year, month - 1, day);
+      
+      // Comparar apenas as datas, ignorando horas
+      const selectedDateOnly = new Date(year, month - 1, day, 0, 0, 0);
+      const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
+      
+      const isSelectedDateInPast = selectedDateOnly < todayOnly;
+      const isSelectedDateToday = selectedDateOnly.getTime() === todayOnly.getTime();
       const nowMinutes = today.getHours() * 60 + today.getMinutes();
 
       const timeSlots = allTimeSlots.map(time => {
         const [hour, minute] = time.split(':').map(Number);
         const slotMinutes = hour * 60 + minute;
 
-        if (isSelectedDateToday && slotMinutes <= nowMinutes) {
+        // Datas anteriores: todos os horários são "past"
+        if (isSelectedDateInPast) {
+          return { time, available: false, status: 'past' };
+        }
+        
+        // Data de hoje: só marca como "past" se a hora já tiver passado
+        if (isSelectedDateToday && slotMinutes < nowMinutes) {
           return { time, available: false, status: 'past' };
         }
 
