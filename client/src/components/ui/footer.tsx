@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { MapPin, Phone, Clock, Mail, MessageCircle, Facebook, Instagram, Music, Youtube } from "lucide-react";
+import { MapPin, Phone, Clock, Mail, MessageCircle, Facebook, Instagram, Music, Youtube, ArrowUp } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Footer as FooterType } from "@shared/schema";
 import { useSiteConfig } from "@/hooks/use-site-config";
@@ -27,6 +27,10 @@ export default function Footer() {
   const openWhatsApp = () => {
     const message = encodeURIComponent("Olá! Gostaria de agendar um horário.");
     window.open(`https://wa.me/55${footer.whatsapp}?text=${message}`, '_blank');
+  };
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const socialLinks: Array<{ url: string; icon: any; label: string; color: string }> = [
@@ -136,22 +140,31 @@ export default function Footer() {
         </div>
         
         {/* Footer Bottom */}
-        <div className="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
-          <div className="space-y-2">
-            <p className="text-sm">
-              Desenvolvido por{' '}
-              <a
-                href="https://github.com/LeandroOmenezes"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-400 font-medium hover:text-blue-300 transition-colors"
-              >
-                Leandro Menezes
-              </a>
-            </p>
-            <p className="text-xs text-gray-500">
-              Desenvolvedor Full Stack | React • Node.js • TypeScript | © 2026 Todos os direitos reservados
-            </p>
+        <div className="border-t border-gray-700 mt-8 pt-8">
+          <div className="flex items-center justify-between mb-4">
+            <div className="space-y-2">
+              <p className="text-sm">
+                Desenvolvido por{' '}
+                <a
+                  href="https://github.com/LeandroOmenezes"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 font-medium hover:text-blue-300 transition-colors"
+                >
+                  Leandro Menezes
+                </a>
+              </p>
+              <p className="text-xs text-gray-500">
+                Desenvolvedor Full Stack | React • Node.js • TypeScript | © 2026 Todos os direitos reservados
+              </p>
+            </div>
+            <button
+              onClick={scrollToTop}
+              className="text-gray-400 hover:text-white transition-colors duration-200 hover:scale-110 transform"
+              aria-label="Voltar ao topo"
+            >
+              <ArrowUp className="w-6 h-6" />
+            </button>
           </div>
         </div>
       </div>
