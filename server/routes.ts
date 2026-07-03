@@ -615,16 +615,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const fullDayBlock = dateBlocks.find(b => !b.startTime || !b.endTime);
 
       const [year, month, day] = date.split('-').map(Number);
-      const today = new Date();
+      
+      // Obter a hora atual em Brasília (UTC-3)
+      const now = new Date();
+      const brasiliaTZ = new Date(now.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }));
+      
       const selectedDate = new Date(year, month - 1, day);
       
       // Comparar apenas as datas, ignorando horas
       const selectedDateOnly = new Date(year, month - 1, day, 0, 0, 0);
-      const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
+      const todayOnly = new Date(brasiliaTZ.getFullYear(), brasiliaTZ.getMonth(), brasiliaTZ.getDate(), 0, 0, 0);
       
       const isSelectedDateInPast = selectedDateOnly < todayOnly;
       const isSelectedDateToday = selectedDateOnly.getTime() === todayOnly.getTime();
-      const nowMinutes = today.getHours() * 60 + today.getMinutes();
+      const nowMinutes = brasiliaTZ.getHours() * 60 + brasiliaTZ.getMinutes();
 
       const timeSlots = allTimeSlots.map(time => {
         const [hour, minute] = time.split(':').map(Number);
@@ -682,9 +686,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const [year, month, day] = appointmentData.date.split('-').map(Number);
       const [hour, minute] = appointmentData.time.split(':').map(Number);
       const appointmentDateTime = new Date(year, month - 1, day, hour, minute, 0);
+      
+      // Obter a hora atual em Brasília (UTC-3)
       const now = new Date();
+      const brasiliaTZ = new Date(now.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }));
 
-      if (appointmentDateTime <= now) {
+      if (appointmentDateTime <= brasiliaTZ) {
         return res.status(409).json({ message: "Este horário já passou e não pode ser agendado." });
       }
 
