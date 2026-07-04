@@ -161,13 +161,19 @@ export default function AppointmentForm() {
         const response = await apiRequest("POST", "/api/appointments", data);
         return response.json();
       } catch (error: any) {
-        // Capturar erro de conflito de horário especificamente
-        if (error.status === 409) {
-          const errorData = await error.json();
-          // Mensagem mais amigável para o cliente
-          throw new Error("Este horário já está ocupado. Por favor, escolha outro horário disponível.");
+        const serverMsg = error?.message || '';
+        // Normaliza mensagens conhecidas do servidor para o cliente
+        if (serverMsg.toLowerCase().includes('já passou')) {
+          throw new Error('Este horário já passou e não pode ser agendado.');
         }
-        throw error;
+        if (serverMsg.toLowerCase().includes('ocupad') || serverMsg.toLowerCase().includes('já está ocupado')) {
+          throw new Error('Este horário já está ocupado. Por favor, escolha outro horário.');
+        }
+        if (serverMsg.toLowerCase().includes('bloquead')) {
+          throw new Error(serverMsg); // já em português com razão
+        }
+        // Fallback: propaga a mensagem do servidor ou uma mensagem genérica
+        throw new Error(serverMsg || 'Erro ao criar agendamento. Tente novamente mais tarde.');
       }
     },
     onSuccess: () => {
@@ -184,16 +190,20 @@ export default function AppointmentForm() {
       queryClient.invalidateQueries({ queryKey: ['/api/appointments/available-times'] });
     },
     onError: (error: any) => {
+      const serverMsg = error?.message || '';
       let title = "Erro ao agendar";
       let description = "Tente novamente mais tarde.";
-      
-      if (error.message?.includes("horário")) {
+
+      if (serverMsg.toLowerCase().includes('já passou')) {
+        title = "Horário expirado";
+        description = "Este horário já passou e não pode ser agendado.";
+      } else if (serverMsg.toLowerCase().includes('ocupad') || serverMsg.toLowerCase().includes('já está ocupado')) {
         title = "Horário não disponível";
         description = "Este horário já está ocupado. Por favor, escolha outro horário.";
-      } else if (error.message) {
-        description = error.message;
+      } else if (serverMsg) {
+        description = serverMsg;
       }
-      
+
       toast({
         title,
         description,
