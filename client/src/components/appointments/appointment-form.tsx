@@ -444,29 +444,31 @@ export default function AppointmentForm() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-gray-700 font-medium">Serviço Específico</FormLabel>
-                <Select 
+                  <Select 
                   onValueChange={(value) => {
                     field.onChange(value);
                     // Atualiza o nome do serviço selecionado para uso no WhatsApp
-                    if (services) {
+                    if (Array.isArray(services)) {
                       const service = services.find(s => String(s.id) === value);
                       if (service) {
                         setSelectedService(service.name);
                       }
+                    } else {
+                      setSelectedService('');
                     }
                   }}
                   value={field.value}
                   disabled={!selectedCategoryId}
                 >
-                  <FormControl>
+                    <FormControl>
                     <SelectTrigger className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500">
                       <SelectValue placeholder="Selecione o serviço">
-                        {services?.find(serv => String(serv.id) === field.value)?.name}
+                        {Array.isArray(services) ? services.find(serv => String(serv.id) === field.value)?.name : undefined}
                       </SelectValue>
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {services?.map((service) => (
+                    {(Array.isArray(services) ? services : []).map((service) => (
                       <SelectItem key={service.id} value={service.id}>
                         {service.name}
                       </SelectItem>
