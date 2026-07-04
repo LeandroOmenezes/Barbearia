@@ -603,12 +603,16 @@ export default function AppointmentForm() {
                           disabled={!slot.available}
                           className={`
                             px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-200 flex flex-col items-center justify-center min-h-16
-                            ${field.value === slot.time 
-                              ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
-                              : slot.available 
-                                ? 'bg-green-50 text-green-700 border-green-200 hover:border-green-400 hover:bg-green-100 hover:shadow-sm'
-                                : 'bg-red-50 text-red-400 border-red-200 cursor-not-allowed'
-                            }
+                            ${field.value === slot.time
+                                ? 'bg-blue-600 text-white border-blue-600 shadow-md'
+                                : slot.available
+                                  ? 'bg-green-50 text-green-700 border-green-200 hover:border-green-400 hover:bg-green-100 hover:shadow-sm'
+                                  : slot.status === 'past'
+                                    ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed'
+                                    : slot.status === 'occupied'
+                                      ? 'bg-red-50 text-red-400 border-red-200 cursor-not-allowed'
+                                      : 'bg-red-50 text-red-400 border-red-200 cursor-not-allowed'
+                              }
                           `}
                         >
                           {slot.time}
