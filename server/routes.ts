@@ -286,7 +286,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/services/all", async (req: Request, res: Response) => {
     try {
       const services = await storage.getServices();
-      res.json(services);
+      // Normalize to array just in case storage returns an unexpected shape
+      if (Array.isArray(services)) return res.json(services);
+      if (services && typeof services === 'object') return res.json(Object.values(services));
+      return res.json([]);
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar serviços" });
     }
@@ -295,7 +298,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/services/featured", async (req: Request, res: Response) => {
     try {
       const services = await storage.getFeaturedServices();
-      res.json(services);
+      if (Array.isArray(services)) return res.json(services);
+      if (services && typeof services === 'object') return res.json(Object.values(services));
+      return res.json([]);
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar serviços em destaque" });
     }
@@ -309,7 +314,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const services = await storage.getServicesByCategory(categoryId);
-      res.json(services);
+      if (Array.isArray(services)) return res.json(services);
+      if (services && typeof services === 'object') return res.json(Object.values(services));
+      return res.json([]);
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar serviços por categoria" });
     }
