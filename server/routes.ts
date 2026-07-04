@@ -16,7 +16,13 @@ import { eq } from "drizzle-orm";
 const BUSINESS_TIMEZONE = "America/Sao_Paulo";
 
 function getBusinessNow() {
-  return new Date(new Date().toLocaleString("pt-BR", { timeZone: BUSINESS_TIMEZONE }));
+  // Avoid parsing locale-formatted strings (which the Date constructor
+  // interprets as MM/DD in some environments). Instead compute Brasilia
+  // time from UTC. Brasilia is UTC-3 (no DST currently).
+  const now = new Date();
+  const utcMillis = now.getTime() + now.getTimezoneOffset() * 60000;
+  const brasiliaOffsetHours = -3; // UTC-3
+  return new Date(utcMillis + brasiliaOffsetHours * 60 * 60 * 1000);
 }
 
 function buildBusinessDateTime(date: string, time: string) {
@@ -50,6 +56,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
   });
+
+  // SSE clients list for realtime appointment updates
+  const sseClients: Array<{ id: number; res: Response }> = [];
+  let sseClientId = 0;
+
+  function broadcastEvent(eventName: string, data: unknown) {
+    const payload = typeof data === 'string' ? data : JSON.stringify(data);
+    for (const client of sseClients) {
+      try {
+        client.res.write(`event: ${eventName}\n`);
+        client.res.write(`data: ${payload}\n\n`);
+      } catch (err) {
+        // ignore write errors; client removal handled on close
+      }
+    }
+  }
+
+  // SSE endpoint: clients subscribe to receive 'time' and 'refresh' events
+  app.get('/api/appointments/stream', (req: Request, res: Response) => {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders?.();
+
+    const id = ++sseClientId;
+    sseClients.push({ id, res });
+
+    // send initial time event
+    const now = getBusinessNow();
+    res.write(`event: time\n`);
+    res.write(`data: ${JSON.stringify({ now: now.toISOString() })}\n\n`);
+
+    req.on('close', () => {
+      const idx = sseClients.findIndex(c => c.id === id);
+      if (idx >= 0) sseClients.splice(idx, 1);
+    });
+  });
+
+  // periodic time broadcasts to keep clients in sync (every 15s)
+  setInterval(() => {
+    const now = getBusinessNow();
+    broadcastEvent('time', { now: now.toISOString() });
+  }, 15_000);
   app.get("/api/clients", async (req: Request, res: Response) => {
     try {
       if (!req.isAuthenticated()) {
@@ -751,6 +800,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const appointment = await storage.createAppointment(appointmentData);
       
+      // Notify SSE clients to refresh available times for the appointment date
+      try {
+        broadcastEvent('refresh', { date: appointment.date, professionalId: appointment.professionalId ?? null });
+      } catch (err) {
+        console.warn('Failed to broadcast appointment creation', err);
+      }
+
       res.status(201).json(appointment);
     } catch (error) {
       if (error instanceof ZodError) {
@@ -791,6 +847,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Simula criação (sem persistir)
+      // Notify SSE clients (test route) so frontend can refresh
+      try {
+        broadcastEvent('refresh', { date: appointmentData.date, professionalId: appointmentData.professionalId ?? null });
+      } catch {}
       return res.status(201).json({ message: 'ok', appointment: appointmentData });
     } catch (err) {
       if (err instanceof ZodError) {

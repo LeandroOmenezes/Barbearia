@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { useState, useEffect } from "react";
-import { maskPhone } from "@/lib/utils";
+import { maskPhone, isoToDDMMYYYY } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -104,6 +104,34 @@ export default function AppointmentForm() {
   const businessCurrentDate = new Date(
     new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })
   ).toISOString().split('T')[0];
+
+  // SSE subscription to receive realtime updates and invalidate available-times
+  useEffect(() => {
+    let es: any;
+    try {
+      es = new EventSource('/api/appointments/stream');
+      // include cookies for auth if browser supports
+      try { es.withCredentials = true; } catch {}
+
+      es.addEventListener('time', () => {
+        if (selectedDate === businessCurrentDate) {
+          queryClient.invalidateQueries({ queryKey: ['/api/appointments/available-times', selectedDate, selectedProfessionalId] });
+        }
+      });
+
+      es.addEventListener('refresh', (ev: any) => {
+        let payload: any = null;
+        try { payload = JSON.parse(ev.data); } catch {}
+        if (!payload || payload.date === selectedDate) {
+          queryClient.invalidateQueries({ queryKey: ['/api/appointments/available-times', selectedDate, selectedProfessionalId] });
+        }
+      });
+    } catch (err) {
+      // ignore
+    }
+
+    return () => { if (es) es.close(); };
+  }, [selectedDate, selectedProfessionalId, businessCurrentDate]);
 
   const { data: availableTimesData, isLoading: isLoadingTimeSlots } = useQuery<AvailableTimesResponse>({
     queryKey: ['/api/appointments/available-times', selectedDate, selectedProfessionalId],
@@ -508,11 +536,16 @@ export default function AppointmentForm() {
               <FormItem>
                 <FormLabel className="text-gray-700 font-medium">Data</FormLabel>
                 <FormControl>
-                  <Input 
-                    type="date" 
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  <Input
+                    type="date"
                     min={businessCurrentDate}
-                    {...field} 
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    {...field}
+                    onChange={(event) => {
+                      field.onChange(event);
+                      setSelectedDate(event.target.value);
+                      form.setValue('time', '');
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
@@ -526,7 +559,7 @@ export default function AppointmentForm() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-gray-700 font-medium">
-                  Horário {selectedDate && `- ${new Date(selectedDate + 'T00:00:00').toLocaleDateString('pt-BR')}`}
+                  Horário {selectedDate && `- ${isoToDDMMYYYY(selectedDate)}`}
                 </FormLabel>
                 {!selectedDate ? (
                   <div className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 text-center">

@@ -19,3 +19,32 @@ export function maskPhone(value: string): string {
 export function unmaskedPhone(value: string): string {
   return value.replace(/\D/g, '');
 }
+
+/** Converte `YYYY-MM-DD` para `DD/MM/YYYY` para exibição ao usuário */
+export function isoToDDMMYYYY(iso?: string | null): string {
+  if (!iso) return '';
+  // Já está no formato YYYY-MM-DD
+  const parts = iso.split('-');
+  if (parts.length === 3) {
+    const [y, m, d] = parts;
+    return `${d}/${m}/${y}`;
+  }
+  // Fallback: tentar parsear como Date
+  try {
+    const dt = new Date(iso);
+    return dt.toLocaleDateString('pt-BR');
+  } catch {
+    return iso;
+  }
+}
+
+/** Converte `DD/MM/YYYY` para `YYYY-MM-DD` (ISO) para envio ao servidor */
+export function ddmmyyyyToIso(ddmmyyyy?: string | null): string {
+  if (!ddmmyyyy) return '';
+  const parts = ddmmyyyy.split('/');
+  if (parts.length === 3) {
+    const [d, m, y] = parts;
+    return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+  }
+  return ddmmyyyy;
+}
