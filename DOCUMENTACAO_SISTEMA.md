@@ -1,402 +1,463 @@
 # Documentação do Sistema Barbearia
 
-## Índice
+## 1. Visão geral
 
-1. [Visão Geral do Sistema](#visão-geral-do-sistema)
-2. [Arquitetura Técnica](#arquitetura-técnica)
-3. [Funcionalidades Principais](#funcionalidades-principais)
-4. [Perfis de Acesso](#perfis-de-acesso)
-5. [Manual de Uso](#manual-de-uso)
-6. [Manual do Administrador](#manual-do-administrador)
-7. [API e Rotas Principais](#api-e-rotas-principais)
-8. [Imagens e Upload](#imagens-e-upload)
-9. [Configuração e Deployment](#configuração-e-deployment)
-10. [Troubleshooting](#troubleshooting)
-11. [Histórico de Atualizações](#histórico-de-atualizações)
+O sistema Barbearia é uma aplicação full-stack para gestão de salões de beleza, com foco em:
 
----
+- agendamento de serviços
+- cadastro e gestão de clientes
+- gestão de categorias, serviços, preços e profissionais
+- painel administrativo para controle operacional
+- vendas, relatórios e histórico financeiro
+- avaliações, comentários e interações públicas
+- personalização do site (banner, footer, tema, configuração geral)
 
-## Visão Geral do Sistema
-
-O **Barbearia** é um sistema de gestão para salões de beleza que integra:
-
-- agendamentos
-- cadastro de clientes
-- cadastro de profissionais
-- gestão de serviços e categorias
-- controle de preços
-- vendas e relatórios
-- avaliações e comentários
-- personalização do site
-- painel administrativo com permissões Master/Admin
-
-O objetivo é permitir que o salão controle operações internas e apresente uma homepage personalizada para clientes.
+A aplicação possui uma interface pública para clientes e um painel administrativo para usuários com perfil Admin ou Master.
 
 ---
 
-## Arquitetura Técnica
+## 2. Arquitetura técnica
 
 ### Frontend
-
 - React 18 + TypeScript
 - Vite
 - Tailwind CSS
 - Radix UI
 - Wouter para roteamento
-- React Query para gerenciamento de dados
+- React Query para cache e sincronização de dados
 - React Hook Form + Zod para validação de formulários
 
 ### Backend
-
 - Node.js + TypeScript
 - Express.js
 - Passport.js para autenticação local e Google OAuth
-- Drizzle ORM para PostgreSQL
-- Supabase como banco de dados e storage
-- Nodemailer para envio de emails
-
-### Infraestrutura
-
-- Aplicação em Render / ambiente Node
-- Banco de dados PostgreSQL gerenciado
-- Imagens armazenadas em bucket Supabase
-- Rotas de upload e exclusão de imagens no servidor
+- Drizzle ORM + PostgreSQL
+- Multer para upload de arquivos
+- Supabase para armazenamento de arquivos/imagens
+- Nodemailer para recuperação de senha e comunicações
 
 ### Estrutura principal de pastas
+- client/ — frontend React
+- server/ — backend Express e rotas
+- shared/ — schema e tipos compartilhados
+- scripts/ — utilidades auxiliares (geração de documentos, screenshots, contratos, etc.)
 
-- `client/` — frontend React
-- `server/` — backend Express
-- `shared/` — schema e tipos compartilhados
-- `uploads/` — antigo diretório de imagens estáticas (geralmente não usado em produção)
+### Fluxo de execução
+- O frontend é servido pelo Vite em desenvolvimento.
+- O backend expõe uma API REST e também serve a aplicação em produção.
+- A porta padrão da aplicação é 5000.
 
 ---
 
-## Funcionalidades Principais
+## 3. Modelos de dados principais
 
-### Autenticação
+### Usuários
+Representam clientes, administradores e profissionais vinculados ao sistema.
 
-- Cadastro de usuário
-- Login com email/senha
-- Login com Google OAuth
-- Logout
-- Recuperação de senha por email
-- Dados do usuário autenticado
+Campos principais:
+- id
+- username
+- password
+- name
+- phone
+- email
+- isAdmin
+- isMaster
+- profileImageBase64
+- profileImageMimeType
+- createdAt
 
-### Clientes
+### Categorias
+- id
+- name
+- icon
 
-- Listagem de clientes
-- Cadastro de novos clientes
-- Edição de cliente
-- Exclusão de cliente
-
-### Serviços e Categorias
-
-- Listagem de categorias
-- Listagem de serviços por categoria
-- Destaque de serviços
-- Cadastro/edição/exclusão de serviços
-- Upload de imagem para serviço
-- Cadastro/edição/exclusão de categorias
+### Serviços
+- id
+- name
+- description
+- minPrice
+- maxPrice
+- categoryId
+- icon
+- imageUrl
+- imageDataBase64
+- imageMimeType
+- featured
 
 ### Preços
-
-- Listagem de preços
-- Listagem de preços por categoria
-- Cadastro de itens de preço
-- Edição de itens de preço
-- Exclusão de itens de preço
+- id
+- name
+- minPrice
+- maxPrice
+- categoryId
 
 ### Agendamentos
-
-- Consulta de horários disponíveis por data
-- Criação de agendamento
-- Listagem de agendamentos
-- Listagem de agendamentos próprios do cliente
-- Atualização de status de agendamento
+- id
+- name
+- email
+- phone
+- serviceId
+- categoryId
+- professionalId
+- date
+- time
+- notes
+- status
+- seenByProfessional
+- createdAt
 
 ### Profissionais
+- id
+- name
+- categoryId
+- bio
+- photoBase64
+- photoMimeType
+- active
+- appointmentInterval
+- userId
+- lunchBreakStart
+- lunchBreakEnd
+- createdAt
 
-- Listagem de profissionais
-- Listagem de profissionais por categoria
-- Cadastro de profissionais (admin)
-- Edição de profissionais
-- Ativação/desativação de profissionais
-- Upload de foto do profissional
-- Painel profissional com agendamentos próprios
-- Marcação de atendimentos como vistos
+### Bloqueios de agenda
+- id
+- professionalId
+- startDate
+- endDate
+- startTime
+- endTime
+- reason
+- description
+- createdAt
 
-### Avaliações e Interações
+### Avaliações e comentários
+- reviews
+- review_comments
+- comment_likes
+- review_likes
 
-- Listagem de avaliações públicas
-- Cadastro de review
-- Curtida em review por `heart` ou `thumbs`
-- Comentários em reviews
-- Curtida em comentário
-- Consulta de curtidas do usuário
-
-### Admin / Configurações do Site
-
-- Listagem e criação de usuários admin
-- Promoção/demissão de Master
-- Configuração de banner
-- Configuração de rodapé
-- Configuração de site (nome, slogan, cor)
-- Upload de logo
-- Upload de imagem de fundo da seção de agendamento
-- Regeneração de imagens
-
-### Vendas e Relatórios
-
-- Cadastro de vendas
-- Listagem de vendas
-- Filtro de vendas por período
-- Cancelamento de venda
+### Configurações do site
+- banner
+- footer
+- site_config
+- vendas e relatórios
 
 ---
 
-## Perfis de Acesso
+## 4. Funcionalidades do sistema
+
+### 4.1 Autenticação e conta
+O sistema suporta:
+- cadastro de usuário
+- login com email/senha
+- logout
+- recuperação de senha
+- autenticação com Google OAuth
+- atualização de telefone e imagem de perfil
+- verificação de sessão autenticada
+
+Fluxo importante:
+- O backend usa sessions e Passport.
+- O acesso a rotas protegidas é controlado por middleware e componentes frontend.
+
+### 4.2 Homepage pública
+A homepage exibe:
+- banner configurável
+- categorias e serviços
+- lista de profissionais
+- avaliações públicas
+- informações do salão
+- seção de agendamento
+
+### 4.3 Agendamento
+O fluxo de agendamento inclui:
+- escolha de categoria e serviço
+- seleção de profissional (quando aplicável)
+- escolha de data e horário disponível
+- validação de data e horário
+- bloqueios de agenda e horários já ocupados
+- confirmação do agendamento
+- atualização de status posterior
+
+Regras de negócio relevantes:
+- datas anteriores à data de negócio são bloqueadas
+- horários já passados não podem ser selecionados
+- horários ocupados ou bloqueados são mostrados como indisponíveis
+- o sistema usa fuso horário de Brasília para comparações de data/hora
+
+### 4.4 Gestão de clientes
+O painel administrativo permite:
+- listar clientes
+- criar clientes
+- editar clientes
+- excluir clientes
+
+### 4.5 Gestão de categorias e serviços
+Permite:
+- criar, editar e excluir categorias
+- criar, editar e excluir serviços
+- marcar serviços como destaque
+- associar serviços a categorias
+- fazer upload de imagem do serviço
+
+### 4.6 Gestão de preços
+Permite:
+- listar itens de preço por categoria
+- criar, editar e excluir itens de preço
+- visualizar faixas de preço mínimo/máximo
+
+### 4.7 Gestão de profissionais
+Permite:
+- listar profissionais
+- filtrar profissionais por categoria
+- ativar/desativar profissionais
+- editar dados do profissional
+- fazer upload de foto do profissional
+- definir intervalo de atendimento
+- definir intervalo de almoço
+- visualizar agenda e atendimentos do profissional
+
+### 4.8 Bloqueios de agenda
+O sistema permite bloquear datas/horários de atendimento para:
+- feriados
+- folgas
+- pausas de almoço
+- indisponibilidade pontual
+
+### 4.9 Vendas e financeiro
+O sistema registra vendas e permite:
+- cadastrar vendas
+- listar histórico
+- filtrar por período
+- cancelar vendas
+- gerar visão financeira básica
+
+### 4.10 Reviews e interação social
+O sistema suporta:
+- cadastro de avaliações públicas
+- comentários em avaliações
+- curtidas em reviews e comentários
+- visualização de curtidas do usuário
+
+### 4.11 Configuração do site
+O painel administrativo permite:
+- editar banner
+- editar footer
+- ajustar nome do site e slogan
+- alterar cor principal do tema
+- enviar logo
+- enviar imagem de fundo para a seção de agendamento
+- configurar chave PIX e dados do beneficiário
+
+---
+
+## 5. Perfis de acesso
 
 ### Cliente
-
-- Acessa homepage pública
-- Agenda serviços
-- Visualiza seus agendamentos
-- Realiza avaliações e curtidas
+- acessa a homepage pública
+- agenda serviços
+- visualiza seus agendamentos
+- envia avaliações
+- acessa perfil pessoal
 
 ### Profissional
-
-- Acessa agenda pessoal
-- Marca atendimentos vistos
-- Visualiza conta vinculada ao perfil
+- visualiza seus agendamentos
+- marca atendimentos como vistos
+- acessa painel próprio com agenda
 
 ### Admin
-
-- Acessa dashboard administrativo
-- Gerencia clientes, serviços, categorias, preços, profissionais e vendas
-- Gerencia avaliações e comentários
-- Gerencia configurações de site
+- acessa dashboard administrativo
+- gerencia clientes, serviços, categorias, preços, profissionais e vendas
+- gerencia avaliações, comentários e configuração do site
 
 ### Master
-
-- Todas as permissões de Admin
-- Cria e exclui usuários Admin
-- Controla permissões Master
-
----
-
-## Manual de Uso
-
-### Cadastro de Conta
-
-1. Acesse `/auth`
-2. Selecione cadastro
-3. Preencha nome, email, telefone e senha
-4. Envie o formulário
-
-### Login
-
-- Via email/senha em `/auth`
-- Via Google OAuth em `/api/auth/google`
-
-### Agendamento
-
-1. Escolha serviço na home
-2. Selecione data e horário disponível
-3. Preencha dados de cliente
-4. Confirme o agendamento
-
-### Visualizar Agendamentos
-
-1. Faça login
-2. Acesse o perfil
-3. Consulte lista de agendamentos
-
-### Enviar Avaliação
-
-1. Abra seção de reviews
-2. Preencha nome, nota e comentário
-3. Envie
-4. Curta outras avaliações
+- possui todas as permissões do Admin
+- cria e remove usuários Admin
+- controla permissões Master
 
 ---
 
-## Manual do Administrador
-
-### Acesso ao Dashboard
-
-- Faça login com usuário Admin ou Master
-- Navegue com menu lateral pelos módulos
-- Acesse dashboard, clientes, profissionais, serviços, categorias, preços, vendas e configurações
-
-### Gerenciar Clientes
-
-- Adicionar clientes
-- Editar clientes
-- Excluir clientes
-- Pesquisar cliente
-
-### Gerenciar Serviços
-
-- Criar serviço com título, descrição, duração e valor
-- Upload de imagem do serviço
-- Marcar como destaque
-- Editar serviço
-- Excluir serviço
-
-### Gerenciar Categorias
-
-- Criar categoria
-- Editar categoria
-- Excluir categoria
-
-### Gerenciar Preços
-
-- Adicionar item de preço
-- Editar valor mínimo e máximo
-- Excluir item de preço
-
-### Gerenciar Profissionais
-
-- Criar profissional
-- Editar informações
-- Ativar ou desativar perfil
-- Upload de foto
-
-### Gerenciar Usuários
-
-- Criar usuários Admin
-- Promover/demitir Master
-- Excluir usuários
-
-### Configuração do Site
-
-- Atualizar nome do site e slogan
-- Ajustar cor principal
-- Upload de logo
-- Upload de imagem de fundo do agendamento
-- Configurar links do rodapé e contato
-
-### Banner e Footer
-
-- Editar título e descrição do banner
-- Atualizar botão de CTA
-- Upload de imagem de banner
-- Editar contato e redes sociais no footer
-
-### Vendas e Relatórios
-
-- Registrar vendas no painel
-- Consultar histórico de vendas
-- Filtrar por período
-- Cancelar vendas quando necessário
-
----
-
-## API e Rotas Principais
+## 6. Rotas principais da API
 
 ### Autenticação
-
-- `POST /api/register`
-- `POST /api/login`
-- `POST /api/logout`
-- `GET /api/user`
-- `GET /api/auth/google`
-- `GET /api/auth/google/callback`
-- `GET /api/auth/google/debug`
-- `POST /api/forgot-password`
-- `GET /api/reset-password/:token`
-- `POST /api/reset-password/:token`
+- POST /api/register
+- POST /api/login
+- POST /api/logout
+- GET /api/user
+- GET /api/auth/google
+- GET /api/auth/google/callback
+- POST /api/forgot-password
+- GET /api/reset-password/:token
+- POST /api/reset-password/:token
 
 ### Clientes
+- GET /api/clients
+- GET /api/clients/:id
+- POST /api/clients
+- PATCH /api/clients/:id
+- DELETE /api/clients/:id
 
-- `GET /api/clients`
-- `GET /api/clients/:id`
-- `POST /api/clients`
-- `PATCH /api/clients/:id`
-- `DELETE /api/clients/:id`
-
-### Categorias e Serviços
-
-- `GET /api/categories`
-- `GET /api/services/all`
-- `GET /api/services/featured`
-- `GET /api/services/:categoryId`
-- `POST /api/services/:id/upload-image`
-- `POST /api/admin/services`
-- `PUT /api/admin/services/:id`
-- `PATCH /api/admin/services/:id/featured`
-- `DELETE /api/admin/services/:id`
-- `POST /api/admin/categories`
-- `PUT /api/admin/categories/:id`
-- `DELETE /api/admin/categories/:id`
+### Categorias e serviços
+- GET /api/categories
+- GET /api/services/all
+- GET /api/services/featured
+- GET /api/services/:categoryId
+- POST /api/services/:id/upload-image
+- POST /api/admin/services
+- PUT /api/admin/services/:id
+- PATCH /api/admin/services/:id/featured
+- DELETE /api/admin/services/:id
+- POST /api/admin/categories
+- PUT /api/admin/categories/:id
+- DELETE /api/admin/categories/:id
 
 ### Preços
-
-- `GET /api/prices`
-- `GET /api/prices/:categoryId`
-- `POST /api/admin/prices`
-- `PUT /api/admin/prices/:id`
-- `DELETE /api/admin/prices/:id`
+- GET /api/prices
+- GET /api/prices/:categoryId
+- POST /api/admin/prices
+- PUT /api/admin/prices/:id
+- DELETE /api/admin/prices/:id
 
 ### Agendamentos
-
-- `GET /api/appointments/available-times/:date`
-- `POST /api/appointments`
-- `GET /api/appointments`
-- `GET /api/my-appointments`
-- `PATCH /api/appointments/:id/status`
+- GET /api/appointments/available-times/:date
+- POST /api/appointments
+- GET /api/appointments
+- GET /api/my-appointments
+- PATCH /api/appointments/:id/status
+- GET /api/appointments/stream
 
 ### Profissionais
+- GET /api/professionals
+- GET /api/professionals/category/:categoryId
+- POST /api/admin/professionals
+- PUT /api/admin/professionals/:id
+- PATCH /api/admin/professionals/:id/active
+- DELETE /api/admin/professionals/:id
+- POST /api/professionals/:id/upload-photo
 
-- `GET /api/professionals`
-- `GET /api/professionals/category/:categoryId`
-- `POST /api/admin/professionals`
-- `PUT /api/admin/professionals/:id`
-- `PATCH /api/admin/professionals/:id/active`
-- `DELETE /api/admin/professionals/:id`
-- `POST /api/professionals/:id/upload-photo`
+### Reviews e comentários
+- GET /api/reviews
+- POST /api/reviews
+- POST /api/reviews/:id/like/:likeType
+- GET /api/user/likes
+- GET /api/reviews/:reviewId/comments
+- POST /api/reviews/:reviewId/comments
+- POST /api/comments/:commentId/like/:likeType
+- GET /api/user/comment-likes
 
-### Reviews e Comentários
-
-- `GET /api/reviews`
-- `POST /api/reviews`
-- `POST /api/reviews/:id/like/:likeType`
-- `GET /api/user/likes`
-- `GET /api/reviews/:reviewId/comments`
-- `POST /api/reviews/:reviewId/comments`
-- `POST /api/comments/:commentId/like/:likeType`
-- `GET /api/user/comment-likes`
-
-### Admin e Configurações
-
-- `GET /api/admin/users`
-- `POST /api/admin/users`
-- `PATCH /api/admin/users/:id/master`
-- `DELETE /api/admin/users/:id`
-- `GET /api/banner`
-- `PUT /api/banner`
-- `POST /api/banner/upload-image`
-- `GET /api/footer`
-- `PUT /api/footer`
-- `GET /api/site-config`
-- `PUT /api/site-config`
-- `POST /api/site-config/upload-logo`
-- `POST /api/site-config/upload-appointment-background`
-- `GET /api/schedule-blocks`
-- `POST /api/schedule-blocks`
-- `DELETE /api/schedule-blocks/:id`
-- `PATCH /api/user/phone`
-- `POST /api/user/upload-profile-image`
-- `GET /api/user/test-auth`
-- `GET /api/images/user/:id`
-- `GET /api/images/service/:id`
-- `GET /api/images/banner`
-- `POST /api/storage/delete`
-- `POST /api/admin/regenerate-images`
+### Administração e configurações
+- GET /api/admin/users
+- POST /api/admin/users
+- PATCH /api/admin/users/:id/master
+- DELETE /api/admin/users/:id
+- GET /api/banner
+- PUT /api/banner
+- POST /api/banner/upload-image
+- GET /api/footer
+- PUT /api/footer
+- GET /api/site-config
+- PUT /api/site-config
+- POST /api/site-config/upload-logo
+- POST /api/site-config/upload-appointment-background
+- GET /api/schedule-blocks
+- POST /api/schedule-blocks
+- DELETE /api/schedule-blocks/:id
+- PATCH /api/user/phone
+- POST /api/user/upload-profile-image
+- DELETE /api/user/profile-image
+- GET /api/images/user/:id
+- GET /api/images/service/:id
+- GET /api/images/banner
+- POST /api/storage/delete
+- POST /api/admin/regenerate-images
 
 ---
 
-## Imagens e Upload
+## 7. Fluxos de uso mais comuns
+
+### Cadastro e login
+1. O usuário acessa /auth.
+2. Pode registrar uma conta ou entrar com Google.
+3. O backend cria ou valida a sessão do usuário.
+
+### Agendamento
+1. O cliente escolhe uma categoria e um serviço.
+2. Seleciona um profissional, se houver.
+3. Escolhe uma data e um horário.
+4. O backend valida se a data/horário é válido e se o slot está disponível.
+5. O agendamento é salvo com status inicial `pending`.
+
+### Administração
+1. O usuário entra com perfil Admin/Master.
+2. Acesso ao dashboard e aos módulos de gestão.
+3. O painel consome a API e atualiza o estado do sistema em tempo real (quando aplicável).
+
+---
+
+## 8. Imagens e uploads
+
+O sistema usa upload para:
+- foto de perfil do usuário
+- foto de profissional
+- imagem de serviço
+- banner
+- logo do site
+- imagem de fundo da seção de agendamento
+
+Processo:
+1. O frontend envia o arquivo.
+2. O backend usa Multer para processar o arquivo.
+3. O arquivo é enviado ao Supabase.
+4. A URL pública é salva no banco.
+5. O frontend usa as URLs salvas para exibir as imagens.
+
+---
+
+## 9. Configuração e execução
+
+### Variáveis de ambiente
+```env
+DATABASE_URL=postgresql://user:password@host:port/database
+SESSION_SECRET=sua_chave_secreta_aqui
+GOOGLE_CLIENT_ID=seu_google_client_id
+GOOGLE_CLIENT_SECRET=seu_google_client_secret
+EMAIL_USER=seu_email@gmail.com
+EMAIL_PASS=sua_senha_de_aplicativo
+SUPABASE_URL=https://...supabase.co
+SUPABASE_SERVICE_KEY=seu_service_role_key
+SUPABASE_BUCKET=public
+```
+
+### Comandos
+- npm install
+- npm run dev
+- npm run build
+- npm run start
+- npm run db:push
+
+### Observações de ambiente
+- A aplicação usa a porta 5000.
+- O backend precisa de PostgreSQL disponível e configurado.
+- Em produção, é necessário garantir os arquivos estáticos e o serviço node.
+
+---
+
+## 10. Pontos importantes de manutenção
+
+- O sistema depende de regras de calendário/horário em Brasília.
+- O fluxo de agendamento é sensível a datas, horários e bloqueios de agenda.
+- As imagens são armazenadas externamente no Supabase.
+- O frontend usa React Query, então mudanças no backend podem exigir invalidation de queries.
+- O sistema possui permissões separadas para Admin, Master, profissional e cliente.
+
+---
+
+## 11. Histórico de atualizações
+
+- 2026-07-04 — documentação revisada para refletir o estado real do sistema, incluindo fluxo de agendamento, configurações, avaliações, vendas, rotas administrativas e gestão de imagens.
+- 2026-07-04 — documentadas rotas de profissionais, bloqueios de agenda, uploads e personalização do site.
 
 - O sistema salva imagens no bucket Supabase usando `uploadFileToSupabase`
 - As URLs públicas são armazenadas no banco e exibidas no frontend
