@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { useState, useEffect } from "react";
-import { maskPhone, isoToDDMMYYYY } from "@/lib/utils";
+import { ddmmyyyyToIso, maskPhone, isoToDDMMYYYY } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -542,8 +542,13 @@ export default function AppointmentForm() {
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
                     {...field}
                     onChange={(event) => {
-                      field.onChange(event);
-                      setSelectedDate(event.target.value);
+                      const rawValue = event.target.value;
+                      const normalizedValue = rawValue.includes('/')
+                        ? ddmmyyyyToIso(rawValue)
+                        : rawValue;
+
+                      field.onChange(normalizedValue);
+                      setSelectedDate(normalizedValue);
                       form.setValue('time', '');
                     }}
                   />
