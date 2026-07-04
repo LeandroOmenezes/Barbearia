@@ -1816,6 +1816,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const { insertScheduleBlockSchema } = await import("@shared/schema");
       const blockData = insertScheduleBlockSchema.parse(req.body);
+      const today = getBusinessNow().toISOString().split("T")[0];
+      if (blockData.startDate < today) {
+        return res.status(400).json({ message: "A data de início não pode ser anterior a hoje." });
+      }
+      if (blockData.endDate < today) {
+        return res.status(400).json({ message: "A data de fim não pode ser anterior a hoje." });
+      }
       if (blockData.endDate < blockData.startDate) {
         return res.status(400).json({ message: "A data de fim não pode ser anterior à data de início." });
       }

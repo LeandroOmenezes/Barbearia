@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Category, ServiceOption, type Professional } from "@shared/schema";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { MessageSquare, Users } from "lucide-react";
+import { Check, MessageSquare, Users } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
 const appointmentFormSchema = z.object({
@@ -51,7 +51,7 @@ export default function AppointmentForm() {
   const [selectedCategoryName, setSelectedCategoryName] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<string | null>(null);
-  
+
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentFormSchema),
     defaultValues: {
@@ -107,6 +107,7 @@ export default function AppointmentForm() {
     enabled: !!selectedCategoryId,
   });
 
+  const requiresProfessionalSelection = selectedCategoryId !== "" && categoryProfessionals.length > 0;
   const businessCurrentDate = getISODateForTimeZone('America/Sao_Paulo');
 
   // SSE subscription to receive realtime updates and invalidate available-times
@@ -147,7 +148,9 @@ export default function AppointmentForm() {
       const response = await fetch(url);
       return response.json();
     },
-    enabled: !!selectedDate,
+    enabled: !!selectedDate && (
+      !!selectedProfessionalId || (selectedCategoryId !== "" && categoryProfessionals.length === 0)
+    ),
     refetchOnWindowFocus: true,
     refetchInterval: selectedDate === businessCurrentDate ? 60_000 : false,
   });
@@ -259,6 +262,15 @@ export default function AppointmentForm() {
   });
 
   function onSubmit(data: AppointmentFormValues) {
+    if (requiresProfessionalSelection && !selectedProfessionalId) {
+      form.setError("professionalId", {
+        type: "manual",
+        message: "Selecione um profissional para esta categoria",
+      });
+      toast({ title: "Profissional obrigatório", description: "Escolha um profissional antes de continuar.", variant: "destructive" });
+      return;
+    }
+
     const finalData = { ...data } as AppointmentFormValues;
 
     // Se o usuário estiver logado e não informou telefone válido, usar telefone do perfil
@@ -494,40 +506,50 @@ export default function AppointmentForm() {
                 name="professionalId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-700 font-medium">Profissional de Preferência</FormLabel>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-1">
-                      {categoryProfessionals.map(p => (
-                        <button
-                          key={p.id}
-                          type="button"
-                          onClick={() => {
-                            field.onChange(String(p.id));
-                            setSelectedProfessionalId(String(p.id));
-                          }}
-                          className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all text-center ${
-                            selectedProfessionalId === String(p.id)
-                              ? "border-blue-500 bg-blue-50"
-                              : "border-gray-200 bg-white hover:border-gray-300"
-                          }`}
-                        >
-                          <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-gray-200 bg-gray-100 flex items-center justify-center shrink-0">
-                            {p.photoBase64 ? (
-                              <img
-                                src={p.photoBase64.startsWith('http') ? p.photoBase64 : `data:${p.photoMimeType};base64,${p.photoBase64}`}
-                                alt={p.name}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <Users className="w-5 h-5 text-gray-400" />
-                            )}
-                          </div>
-                          <div>
-                            <span className="text-xs font-semibold text-gray-800 block">{p.name}</span>
-                            {p.bio && <span className="text-xs text-gray-400 line-clamp-1">{p.bio}</span>}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
+                    <FormLabel className="text-gray-700 font-medium">
+                      Profissional de Preferência <span className="text-red-600">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Select
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          form.setValue("professionalId", value);
+                          setSelectedProfessionalId(value);
+                          form.setValue('time', '');
+                          if (selectedDate) {
+                            queryClient.invalidateQueries({ queryKey: ['/api/appointments/available-times', selectedDate, value] });
+                          }
+                        }}
+                        value={field.value}
+                      >
+                        <SelectTrigger className={`w-full px-4 py-3 rounded-lg focus:ring-2 ${requiresProfessionalSelection && !field.value ? 'border-red-500 bg-red-50 focus:ring-red-200' : 'border-gray-200 focus:ring-blue-500'}`}>
+                          <SelectValue placeholder={requiresProfessionalSelection && !field.value ? "Selecione um profissional (obrigatório)" : "Selecione um profissional"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categoryProfessionals.map(p => (
+                            <SelectItem key={p.id} value={String(p.id)}>
+                              <span className="flex items-center gap-2">
+                                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-600">
+                                  {p.photoBase64 ? (
+                                    <img
+                                      src={p.photoBase64.startsWith('http') ? p.photoBase64 : `data:${p.photoMimeType};base64,${p.photoBase64}`}
+                                      alt={p.name}
+                                      className="h-8 w-8 rounded-full object-cover"
+                                    />
+                                  ) : (
+                                    <Users className="h-4 w-4" />
+                                  )}
+                                </span>
+                                <span>{p.name}</span>
+                              </span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Esta categoria exige seleção de profissional. A agenda só será carregada para o profissional escolhido.
+                    </p>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -586,6 +608,14 @@ export default function AppointmentForm() {
                 {!selectedDate ? (
                   <div className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 text-center">
                     Selecione uma data primeiro
+                  </div>
+                ) : !selectedCategoryId ? (
+                  <div className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 text-center">
+                    Selecione a categoria de serviço para ver os horários disponíveis.
+                  </div>
+                ) : categoryProfessionals.length > 0 && !selectedProfessionalId ? (
+                  <div className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 text-center">
+                    Selecione um profissional para carregar a agenda correta.
                   </div>
                 ) : isLoadingTimeSlots ? (
                   <div className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 text-center">
@@ -674,7 +704,7 @@ export default function AppointmentForm() {
           <Button
             type="submit"
             className="w-full bg-blue-600 text-white px-6 py-4 rounded-xl hover:bg-blue-700 transition-colors duration-200 font-medium shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-            disabled={createAppointmentMutation.isPending}
+            disabled={createAppointmentMutation.isPending || (requiresProfessionalSelection && !selectedProfessionalId)}
           >
             {createAppointmentMutation.isPending ? (
               <div className="flex items-center justify-center gap-2">

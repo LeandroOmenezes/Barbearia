@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { getISODateForTimeZone } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +29,12 @@ const blockFormSchema = z.object({
   description: z.string().optional(),
 }).refine(data => data.endDate >= data.startDate, {
   message: "A data de fim não pode ser anterior à data de início",
+  path: ["endDate"],
+}).refine(data => data.startDate >= new Date().toISOString().split("T")[0], {
+  message: "A data de início não pode ser anterior a hoje",
+  path: ["startDate"],
+}).refine(data => data.endDate >= new Date().toISOString().split("T")[0], {
+  message: "A data de fim não pode ser anterior a hoje",
   path: ["endDate"],
 }).refine(data => {
   if (data.periodType === "custom") {
@@ -99,6 +106,8 @@ export default function ScheduleBlocksManagement() {
   });
 
   const periodType = form.watch("periodType");
+  const startDate = form.watch("startDate");
+  const today = getISODateForTimeZone("America/Sao_Paulo");
 
   const createMutation = useMutation({
     mutationFn: (data: BlockFormValues) => {
@@ -227,7 +236,19 @@ export default function ScheduleBlocksManagement() {
                       <FormItem>
                         <FormLabel>Data de Início</FormLabel>
                         <FormControl>
-                          <Input type="date" {...field} />
+                          <Input
+                            type="date"
+                            {...field}
+                            min={today}
+                            onChange={(event) => {
+                              field.onChange(event);
+                              const newStartDate = event.target.value;
+                              const currentEndDate = form.getValues("endDate");
+                              if (currentEndDate && newStartDate > currentEndDate) {
+                                form.setValue("endDate", newStartDate);
+                              }
+                            }}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -240,7 +261,11 @@ export default function ScheduleBlocksManagement() {
                       <FormItem>
                         <FormLabel>Data de Fim</FormLabel>
                         <FormControl>
-                          <Input type="date" {...field} />
+                          <Input
+                            type="date"
+                            {...field}
+                            min={startDate || today}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -293,7 +318,7 @@ export default function ScheduleBlocksManagement() {
                         <FormItem>
                           <FormLabel className="text-xs text-gray-600">Horário de Início</FormLabel>
                           <FormControl>
-                            <Input type="time" {...field} />
+                            <Input type="date" {...field} min={startDate || today} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
