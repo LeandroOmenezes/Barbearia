@@ -545,12 +545,22 @@ export class MemStorage implements IStorage {
 
   async updateUserProfileImage(
     id: number,
-    imageUrl: string,
-    mimeType: string,
+    imageUrl: string | null,
+    mimeType: string | null,
   ): Promise<User | undefined> {
     const user = this.users.get(id);
     if (user) {
       const updatedUser = { ...user, profileImageBase64: imageUrl, profileImageMimeType: mimeType };
+      this.users.set(id, updatedUser);
+      return updatedUser;
+    }
+    return undefined;
+  }
+
+  async deleteUserProfileImage(id: number): Promise<User | undefined> {
+    const user = this.users.get(id);
+    if (user) {
+      const updatedUser = { ...user, profileImageBase64: null, profileImageMimeType: null };
       this.users.set(id, updatedUser);
       return updatedUser;
     }

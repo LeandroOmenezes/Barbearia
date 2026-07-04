@@ -1,7 +1,7 @@
 import { User } from "lucide-react";
 
 interface AvatarProps {
-  userId: number;
+  userId?: number | null;
   userName: string;
   imageUrl?: string;
   size?: "xs" | "sm" | "md" | "lg";
