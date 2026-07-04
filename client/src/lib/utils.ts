@@ -20,6 +20,17 @@ export function unmaskedPhone(value: string): string {
   return value.replace(/\D/g, '');
 }
 
+/** Retorna a data atual no fuso horário especificado no formato YYYY-MM-DD */
+export function getISODateForTimeZone(timeZone: string): string {
+  const now = new Date();
+  return new Intl.DateTimeFormat('sv', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(now);
+}
+
 /** Converte `YYYY-MM-DD` para `DD/MM/YYYY` para exibição ao usuário */
 export function isoToDDMMYYYY(iso?: string | null): string {
   if (!iso) return '';

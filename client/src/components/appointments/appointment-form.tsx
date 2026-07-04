@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { useState, useEffect } from "react";
-import { ddmmyyyyToIso, maskPhone, isoToDDMMYYYY } from "@/lib/utils";
+import { ddmmyyyyToIso, getISODateForTimeZone, maskPhone, isoToDDMMYYYY } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -101,9 +101,7 @@ export default function AppointmentForm() {
     enabled: !!selectedCategoryId,
   });
 
-  const businessCurrentDate = new Date(
-    new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })
-  ).toISOString().split('T')[0];
+  const businessCurrentDate = getISODateForTimeZone('America/Sao_Paulo');
 
   // SSE subscription to receive realtime updates and invalidate available-times
   useEffect(() => {
