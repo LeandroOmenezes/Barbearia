@@ -760,6 +760,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
   });
+
+  // Rota de teste interna (SEM autenticação) para reproduzir validação de agendamentos
+  app.post("/api/_test/create-appointment", async (req: Request, res: Response) => {
+    try {
+      const appointmentData = insertAppointmentSchema.parse(req.body);
+
+      // Reaproveita a mesma validação de timezone/horário
+      const brasiliaTZ = getBusinessNow();
+      const [year, month, day] = appointmentData.date.split('-').map(Number);
+      const selectedDateOnly = new Date(year, month - 1, day, 0, 0, 0);
+      const todayOnly = new Date(brasiliaTZ.getFullYear(), brasiliaTZ.getMonth(), brasiliaTZ.getDate(), 0, 0, 0);
+
+      console.log("[TEST-API] received:", appointmentData);
+      console.log("[TEST-API] brasilia now:", brasiliaTZ.toISOString(), "selectedDateOnly:", selectedDateOnly.toISOString());
+
+      if (selectedDateOnly < todayOnly) {
+        return res.status(409).json({ message: "Este horário já passou e não pode ser agendado." });
+      }
+
+      const isSelectedDateToday = selectedDateOnly.getTime() === todayOnly.getTime();
+      if (isSelectedDateToday) {
+        const [hour, minute] = appointmentData.time.split(':').map(Number);
+        const slotMinutes = hour * 60 + minute;
+        const nowMinutes = brasiliaTZ.getHours() * 60 + brasiliaTZ.getMinutes();
+        console.log("[TEST-API] slotMinutes:", slotMinutes, "nowMinutes:", nowMinutes);
+        if (slotMinutes <= nowMinutes) {
+          return res.status(409).json({ message: "Este horário já passou e não pode ser agendado." });
+        }
+      }
+
+      // Simula criação (sem persistir)
+      return res.status(201).json({ message: 'ok', appointment: appointmentData });
+    } catch (err) {
+      if (err instanceof ZodError) {
+        return res.status(400).json({ message: 'Dados inválidos', errors: err.errors });
+      }
+      return res.status(500).json({ message: 'Erro interno' });
+    }
+  });
   
   app.get("/api/appointments", async (req: Request, res: Response) => {
     try {
