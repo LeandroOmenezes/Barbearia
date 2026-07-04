@@ -547,10 +547,14 @@ export default function AppointmentForm() {
                     min={businessCurrentDate}
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
                     {...field}
-                    readOnly
+                    // Prevent printable character input but allow navigation keys so
+                    // the native date picker can open on click/focus in all browsers.
                     onKeyDown={(e) => {
-                      // Prevent manual typing in the date field to avoid inconsistent parsing
-                      e.preventDefault();
+                      // e.key length === 1 are printable characters (numbers, letters, punctuation)
+                      // Allow control/navigation keys like Tab, Enter, Arrow keys, Backspace
+                      if (e.key && e.key.length === 1) {
+                        e.preventDefault();
+                      }
                     }}
                     onPaste={(e) => e.preventDefault()}
                     onCut={(e) => e.preventDefault()}
