@@ -86,7 +86,13 @@ export default function AppointmentForm() {
     queryFn: async () => {
       if (!selectedCategoryId) return [];
       const response = await fetch(`/api/services/${selectedCategoryId}`);
-      return response.json();
+      const data = await response.json();
+      // Normalize possible responses to always return an array of services
+      if (Array.isArray(data)) return data;
+      if (data && Array.isArray(data.items)) return data.items;
+      // If API returns an object keyed by ids, get values
+      if (data && typeof data === 'object') return Object.values(data) as ServiceOption[];
+      return [];
     },
     enabled: !!selectedCategoryId,
   });
