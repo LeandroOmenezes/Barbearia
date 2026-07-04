@@ -318,7 +318,7 @@ export default function ScheduleBlocksManagement() {
                         <FormItem>
                           <FormLabel className="text-xs text-gray-600">Horário de Início</FormLabel>
                           <FormControl>
-                            <Input type="date" {...field} min={startDate || today} />
+                            <Input type="time" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
