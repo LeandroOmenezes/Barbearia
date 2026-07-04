@@ -101,6 +101,10 @@ export default function AppointmentForm() {
     enabled: !!selectedCategoryId,
   });
 
+  const businessCurrentDate = new Date(
+    new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })
+  ).toISOString().split('T')[0];
+
   const { data: availableTimesData, isLoading: isLoadingTimeSlots } = useQuery<AvailableTimesResponse>({
     queryKey: ['/api/appointments/available-times', selectedDate, selectedProfessionalId],
     queryFn: async () => {
@@ -112,6 +116,8 @@ export default function AppointmentForm() {
       return response.json();
     },
     enabled: !!selectedDate,
+    refetchOnWindowFocus: true,
+    refetchInterval: selectedDate === businessCurrentDate ? 60_000 : false,
   });
   const timeSlots = availableTimesData?.timeSlots ?? [];
   const dateBlocked = availableTimesData?.blocked ?? false;
@@ -213,16 +219,12 @@ export default function AppointmentForm() {
     createAppointmentMutation.mutate(finalData);
   }
 
-  const formatPhoneForWhatsApp = (phone: string) => {
-    // Remove todos os caracteres não numéricos
+  const formatPhoneForWhatsApp = (phone: string = "") => {
     const numbersOnly = phone.replace(/\D/g, '');
-    
-    // Verifica se já tem o código do país (Brasil - 55)
+    if (!numbersOnly) return "";
     if (numbersOnly.startsWith('55')) {
       return numbersOnly;
     }
-    
-    // Adiciona o código do país (Brasil - 55)
     return `55${numbersOnly}`;
   };
 
@@ -266,7 +268,8 @@ export default function AppointmentForm() {
       }
       
       // Formata o número do telefone do cliente para WhatsApp
-      const clientPhone = formatPhoneForWhatsApp(values.phone);
+      const rawPhoneForWhatsApp = String(values.phone || user?.phone || "");
+      const formattedClientPhone = formatPhoneForWhatsApp(rawPhoneForWhatsApp);
       
       // Formata o número do WhatsApp (número do salão) - este seria o número comercial do salão
       const salonWhatsApp = "5511999999999"; // Número de exemplo do salão
@@ -275,15 +278,12 @@ export default function AppointmentForm() {
       createAppointmentMutation.mutate(values);
       
       // Cria a URL do WhatsApp com a mensagem codificada e o telefone do cliente
-      const whatsappUrl = `https://wa.me/${salonWhatsApp}?text=${encodeURIComponent(message + "\n\nMeu telefone: " + values.phone)}`;
+      const whatsappUrl = `https://wa.me/${salonWhatsApp}?text=${encodeURIComponent(message + "\n\nMeu telefone: " + formattedClientPhone)}`;
       
       // Abre o WhatsApp em uma nova janela
       window.open(whatsappUrl, '_blank');
     });
   };
-
-  // Obter data mínima (hoje)
-  const today = new Date().toISOString().split('T')[0];
 
   return (
     <Form {...form}>
@@ -487,7 +487,7 @@ export default function AppointmentForm() {
                   <Input 
                     type="date" 
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    min={new Date().toISOString().split('T')[0]}
+                    min={businessCurrentDate}
                     {...field} 
                   />
                 </FormControl>

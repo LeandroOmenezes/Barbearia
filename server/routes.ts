@@ -13,6 +13,23 @@ import { db } from "./db";
 import { users, services, banner, siteConfig, professionals } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
+const BUSINESS_TIMEZONE = "America/Sao_Paulo";
+
+function getBusinessNow() {
+  return new Date(new Date().toLocaleString("pt-BR", { timeZone: BUSINESS_TIMEZONE }));
+}
+
+function buildBusinessDateTime(date: string, time: string) {
+  const [year, month, day] = date.split("-").map(Number);
+  const [hour, minute] = time.split(":").map(Number);
+  const isoString = `${date}T${time}:00-03:00`;
+  const dateTime = new Date(isoString);
+  if (!Number.isNaN(dateTime.getTime())) {
+    return dateTime;
+  }
+  return new Date(Date.UTC(year, month - 1, day, hour + 3, minute));
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
   
@@ -615,17 +632,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const fullDayBlock = dateBlocks.find(b => !b.startTime || !b.endTime);
 
       const [year, month, day] = date.split('-').map(Number);
-      
-      // Obter a hora atual em Brasília (UTC-3)
-      const now = new Date();
-      const brasiliaTZ = new Date(now.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }));
-      
-      const selectedDate = new Date(year, month - 1, day);
-      
-      // Comparar apenas as datas, ignorando horas
+      const brasiliaTZ = getBusinessNow();
       const selectedDateOnly = new Date(year, month - 1, day, 0, 0, 0);
       const todayOnly = new Date(brasiliaTZ.getFullYear(), brasiliaTZ.getMonth(), brasiliaTZ.getDate(), 0, 0, 0);
-      
       const isSelectedDateInPast = selectedDateOnly < todayOnly;
       const isSelectedDateToday = selectedDateOnly.getTime() === todayOnly.getTime();
       const nowMinutes = brasiliaTZ.getHours() * 60 + brasiliaTZ.getMinutes();
@@ -683,16 +692,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const appointmentData = insertAppointmentSchema.parse(req.body);
 
+      // Validar data/hora em relação ao horário de negócio (Brasília)
+      const brasiliaTZ = getBusinessNow();
       const [year, month, day] = appointmentData.date.split('-').map(Number);
-      const [hour, minute] = appointmentData.time.split(':').map(Number);
-      const appointmentDateTime = new Date(year, month - 1, day, hour, minute, 0);
-      
-      // Obter a hora atual em Brasília (UTC-3)
-      const now = new Date();
-      const brasiliaTZ = new Date(now.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }));
 
-      if (appointmentDateTime <= brasiliaTZ) {
+      const selectedDateOnly = new Date(year, month - 1, day, 0, 0, 0);
+      const todayOnly = new Date(brasiliaTZ.getFullYear(), brasiliaTZ.getMonth(), brasiliaTZ.getDate(), 0, 0, 0);
+
+      // Datas anteriores não podem ser agendadas
+      if (selectedDateOnly < todayOnly) {
         return res.status(409).json({ message: "Este horário já passou e não pode ser agendado." });
+      }
+
+      // Se for hoje, validar horário (minutos) contra agora em Brasília
+      const isSelectedDateToday = selectedDateOnly.getTime() === todayOnly.getTime();
+      if (isSelectedDateToday) {
+        const [hour, minute] = appointmentData.time.split(':').map(Number);
+        const slotMinutes = hour * 60 + minute;
+        const nowMinutes = brasiliaTZ.getHours() * 60 + brasiliaTZ.getMinutes();
+        if (slotMinutes <= nowMinutes) {
+          return res.status(409).json({ message: "Este horário já passou e não pode ser agendado." });
+        }
       }
 
       // Verificar se a data/horário está bloqueado (incluindo bloqueios parciais)
