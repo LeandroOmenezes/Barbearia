@@ -147,6 +147,20 @@ export default function AppointmentForm() {
   useEffect(() => {
     const subscription = form.watch((value, { name }) => {
       if (name === 'date' && value.date) {
+        // Impede seleção de datas anteriores à data de negócio (Brasília)
+        if (value.date < businessCurrentDate) {
+          toast({
+            title: "Data inválida",
+            description: "Não é possível selecionar datas anteriores. Ajustei para a data de hoje.",
+            variant: "destructive",
+          });
+          // Força a data mínima
+          setSelectedDate(businessCurrentDate);
+          form.setValue('date', businessCurrentDate);
+          form.setValue('time', '');
+          return;
+        }
+
         setSelectedDate(value.date);
         // Limpar horário selecionado quando a data mudar
         form.setValue('time', '');
