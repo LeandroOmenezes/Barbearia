@@ -326,6 +326,7 @@ export type InsertSiteConfig = z.infer<typeof insertSiteConfigSchema>;
 export const scheduleBlocks = pgTable("schedule_blocks", {
   id: serial("id").primaryKey(),
   professionalId: integer("professional_id"),
+  title: text("title"),
   startDate: text("start_date").notNull(),
   endDate: text("end_date").notNull(),
   startTime: text("start_time"),
@@ -337,6 +338,7 @@ export const scheduleBlocks = pgTable("schedule_blocks", {
 
 export const insertScheduleBlockSchema = createInsertSchema(scheduleBlocks, {
   professionalId: z.number().int().nullable().optional(),
+  title: z.string().nullable().optional(),
   startDate: z.string().min(1, "Data de início é obrigatória"),
   endDate: z.string().min(1, "Data de fim é obrigatória"),
   startTime: z.string().nullable().optional(),
