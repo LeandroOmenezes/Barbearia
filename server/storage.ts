@@ -1125,6 +1125,7 @@ export class MemStorage implements IStorage {
     const id = Date.now();
     const newBlock: ScheduleBlock = {
       id,
+      title: block.title ?? null,
       description: block.description ?? null,
       professionalId: block.professionalId ?? null,
       startTime: block.startTime ?? null,
