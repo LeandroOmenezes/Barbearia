@@ -233,9 +233,7 @@ export class MemStorage implements IStorage {
     try {
       const adminUser = await this.getUserByUsername("lleandro.m32@gmail.com");
       if (adminUser && !adminUser.isMaster) {
-        console.log("🔧 Corrigindo flag isMaster do usuário master...");
         await this.updateUser(adminUser.id, { isMaster: true });
-        console.log("✅ Flag isMaster corrigida com sucesso!");
       }
     } catch (error) {
       console.warn("⚠️ Erro ao verificar/corrigir isMaster:", error);

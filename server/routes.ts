@@ -755,13 +755,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const selectedDateOnly = new Date(year, month - 1, day, 0, 0, 0);
       const todayOnly = new Date(brasiliaTZ.getFullYear(), brasiliaTZ.getMonth(), brasiliaTZ.getDate(), 0, 0, 0);
 
-      // DEBUG: log para investigação de agendamentos retroativos
-      console.log("[AGENDAMENTO DEBUG] received:", appointmentData);
-      console.log("[AGENDAMENTO DEBUG] brasilia now:", brasiliaTZ.toISOString(), "todayOnly:", todayOnly.toISOString(), "selectedDateOnly:", selectedDateOnly.toISOString());
-
       // Datas anteriores não podem ser agendadas
       if (selectedDateOnly < todayOnly) {
-        console.log("[AGENDAMENTO DEBUG] Rejeitado: data anterior ao dia atual (Brasília)");
         return res.status(409).json({ message: "Este horário já passou e não pode ser agendado." });
       }
 
@@ -771,9 +766,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const [hour, minute] = appointmentData.time.split(':').map(Number);
         const slotMinutes = hour * 60 + minute;
         const nowMinutes = brasiliaTZ.getHours() * 60 + brasiliaTZ.getMinutes();
-        console.log("[AGENDAMENTO DEBUG] slotMinutes:", slotMinutes, "nowMinutes:", nowMinutes);
         if (slotMinutes <= nowMinutes) {
-          console.log("[AGENDAMENTO DEBUG] Rejeitado: horário já passou no dia atual (Brasília)");
           return res.status(409).json({ message: "Este horário já passou e não pode ser agendado." });
         }
       }
@@ -835,9 +828,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const selectedDateOnly = new Date(year, month - 1, day, 0, 0, 0);
       const todayOnly = new Date(brasiliaTZ.getFullYear(), brasiliaTZ.getMonth(), brasiliaTZ.getDate(), 0, 0, 0);
 
-      console.log("[TEST-API] received:", appointmentData);
-      console.log("[TEST-API] brasilia now:", brasiliaTZ.toISOString(), "selectedDateOnly:", selectedDateOnly.toISOString());
-
       if (selectedDateOnly < todayOnly) {
         return res.status(409).json({ message: "Este horário já passou e não pode ser agendado." });
       }
@@ -847,7 +837,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const [hour, minute] = appointmentData.time.split(':').map(Number);
         const slotMinutes = hour * 60 + minute;
         const nowMinutes = brasiliaTZ.getHours() * 60 + brasiliaTZ.getMinutes();
-        console.log("[TEST-API] slotMinutes:", slotMinutes, "nowMinutes:", nowMinutes);
         if (slotMinutes <= nowMinutes) {
           return res.status(409).json({ message: "Este horário já passou e não pode ser agendado." });
         }
