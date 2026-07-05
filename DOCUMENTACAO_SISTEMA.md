@@ -1,5 +1,36 @@
 # Documentação do Sistema Barbearia
 
+## Índice
+
+- [1. Visão geral](#1-visão-geral)
+- [2. Arquitetura técnica](#2-arquitetura-técnica)
+  - [Frontend](#frontend)
+  - [Backend](#backend)
+  - [Estrutura principal de pastas](#estrutura-principal-de-pastas)
+  - [Fluxo de execução](#fluxo-de-execução)
+- [3. Modelos de dados principais](#3-modelos-de-dados-principais)
+- [4. Funcionalidades do sistema](#4-funcionalidades-do-sistema)
+  - [4.1 Autenticação e conta](#41-autenticação-e-conta)
+  - [4.2 Homepage pública](#42-homepage-pública)
+  - [4.3 Agendamento](#43-agendamento)
+  - [4.4 Gestão de clientes](#44-gestão-de-clientes)
+  - [4.5 Gestão de categorias e serviços](#45-gestão-de-categorias-e-serviços)
+  - [4.6 Gestão de preços](#46-gestão-de-preços)
+  - [4.7 Gestão de profissionais](#47-gestão-de-profissionais)
+  - [4.8 Bloqueios de agenda](#48-bloqueios-de-agenda)
+  - [4.9 Vendas e financeiro](#49-vendas-e-financeiro)
+  - [4.10 Reviews e interação social](#410-reviews-e-interação-social)
+  - [4.11 Configuração do site](#411-configuração-do-site)
+- [5. Perfis de acesso](#5-perfis-de-acesso)
+- [6. Rotas principais da API](#6-rotas-principais-da-api)
+- [7. Fluxos de uso mais comuns](#7-fluxos-de-uso-mais-comuns)
+- [8. Imagens e uploads](#8-imagens-e-uploads)
+- [9. Configuração e execução](#9-configuração-e-execução)
+- [10. Pontos importantes de manutenção](#10-pontos-importantes-de-manutenção)
+- [11. Histórico de atualizações](#11-histórico-de-atualizações)
+- [12. Configuração e Deployment](#12-configuração-e-deployment)
+- [13. Troubleshooting](#13-troubleshooting)
+
 ## 1. Visão geral
 
 O sistema Barbearia é uma aplicação full-stack para gestão de salões de beleza, com foco em:
@@ -218,6 +249,7 @@ Permite:
 - definir intervalo de atendimento
 - definir intervalo de almoço
 - visualizar agenda e atendimentos do profissional
+- acessar painel próprio com marcação de atendimentos vistos e contagem de não vistos
 
 ### 4.8 Bloqueios de agenda
 O sistema permite bloquear datas/horários de atendimento para:
@@ -233,6 +265,11 @@ O sistema registra vendas e permite:
 - filtrar por período
 - cancelar vendas
 - gerar visão financeira básica
+
+Fluxo de vendas:
+- o usuário registra uma venda vinculada a um cliente e produtos/serviços
+- o sistema salva o histórico e permite consultar ou cancelar a venda
+- relatórios financeiros são gerados a partir do histórico de vendas e filtrações
 
 ### 4.10 Reviews e interação social
 O sistema suporta:
@@ -320,6 +357,13 @@ O painel administrativo permite:
 - PUT /api/admin/prices/:id
 - DELETE /api/admin/prices/:id
 
+### Vendas
+- POST /api/sales
+- GET /api/sales
+- PATCH /api/sales/:id
+- PATCH /api/sales/:id/cancel
+- GET /api/sales/filter
+
 ### Agendamentos
 - GET /api/appointments/available-times/:date
 - POST /api/appointments
@@ -336,6 +380,10 @@ O painel administrativo permite:
 - PATCH /api/admin/professionals/:id/active
 - DELETE /api/admin/professionals/:id
 - POST /api/professionals/:id/upload-photo
+- GET /api/professional/me
+- GET /api/professional/unseen-count
+- GET /api/professional/appointments
+- POST /api/professional/appointments/mark-seen
 
 ### Reviews e comentários
 - GET /api/reviews
@@ -458,15 +506,13 @@ SUPABASE_BUCKET=public
 
 - 2026-07-04 — documentação revisada para refletir o estado real do sistema, incluindo fluxo de agendamento, configurações, avaliações, vendas, rotas administrativas e gestão de imagens.
 - 2026-07-04 — documentadas rotas de profissionais, bloqueios de agenda, uploads e personalização do site.
-
-- O sistema salva imagens no bucket Supabase usando `uploadFileToSupabase`
-- As URLs públicas são armazenadas no banco e exibidas no frontend
-- As imagens podem ser excluídas do bucket usando `deleteFileFromSupabase`
-- Os scripts legados de `/uploads/...` foram removidos do código principal
+- 2026-06-24 — documentação atualizada com rotas reais e fluxo de upload no bucket Supabase.
+- 2026-06-24 — scripts legados de migração e limpeza removidos do código principal.
+- 2026-06-24 — documentados perfis Master, Admin, Profissional e Cliente.
 
 ---
 
-## Configuração e Deployment
+## 12. Configuração e Deployment
 
 ### Variáveis de ambiente principais
 
@@ -500,7 +546,7 @@ SUPABASE_BUCKET=public
 
 ---
 
-## Troubleshooting
+## 13. Troubleshooting
 
 ### Erro de autenticação Google
 
@@ -527,9 +573,3 @@ SUPABASE_BUCKET=public
 - Verifique se o profissional está ativo
 
 ---
-
-## Histórico de Atualizações
-
-- `2026-06-24` — documentação atualizada com rotas reais e fluxo de upload no bucket Supabase
-- `2026-06-24` — scripts legados de migração e limpeza removidos do código principal
-- `2026-06-24` — documentados perfis Master, Admin, Profissional e Cliente
