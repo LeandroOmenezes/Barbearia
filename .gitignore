@@ -8,3 +8,5 @@ vite.config.ts.*
 backup.sql
 .config
 .local
+# Diretório de arquivos gerados
+generated/
