@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, real, date } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, real, date, varchar, json } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -399,6 +399,15 @@ export const insertProfessionalSchema = createInsertSchema(professionals, {
 
 export type Professional = typeof professionals.$inferSelect;
 export type InsertProfessional = z.infer<typeof insertProfessionalSchema>;
+
+// === Sessions (for express-session + connect-pg-simple) ===
+export const sessions = pgTable("session", {
+  sid: varchar("sid").notNull().primaryKey(),
+  sess: json("sess").notNull(),
+  expire: timestamp("expire").notNull(),
+});
+
+export type Session = typeof sessions.$inferSelect;
 
 // Additional types for frontend select options
 export interface ServiceOption {
