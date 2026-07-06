@@ -1,15 +1,16 @@
 import { Express } from "express";
 import session from "express-session";
 import passport from "passport";
-import { Strategy as LocalStrategy } from "passport-local"; // <--- ADICIONE ESTA LINHA AQUI
+import { Strategy as LocalStrategy } from "passport-local";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-import createMemoryStore from "memorystore";
-import { scrypt, randomBytes, timingSafeEqual } from "crypto"; // Caso use para criptografia de senha
+import connectPg from "connect-pg-simple";
+import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as UserType } from "@shared/schema";
+import { pool } from "./db";
 
-const MemoryStore = createMemoryStore(session);
+const PostgresSessionStore = connectPg(session);
 
 
 
@@ -100,8 +101,10 @@ async function removePasswordResetToken(token: string): Promise<void> {
 export { hashPassword, generatePasswordResetToken, verifyPasswordResetToken, removePasswordResetToken };
 
 export function setupAuth(app: Express) {
-  const sessionStore = new MemoryStore({
-    checkPeriod: 86400000, // prune expired entries every 24h
+  const sessionStore = new PostgresSessionStore({
+    pool,
+    tableName: "session",
+    createTableIfMissing: true,
   });
   
   const sessionSettings: session.SessionOptions = {
