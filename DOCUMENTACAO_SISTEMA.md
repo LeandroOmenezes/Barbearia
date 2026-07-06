@@ -62,6 +62,7 @@ A aplicação possui uma interface pública para clientes e um painel administra
 - Node.js + TypeScript
 - Express.js
 - Passport.js para autenticação local e Google OAuth
+- express-session + connect-pg-simple para sessões persistidas no PostgreSQL
 - Drizzle ORM + PostgreSQL
 - Multer para upload de arquivos
 - Supabase para armazenamento de arquivos/imagens
@@ -190,8 +191,9 @@ O sistema suporta:
 - verificação de sessão autenticada
 
 Fluxo importante:
-- O backend usa sessions e Passport.
+- O backend usa sessions persistidas com express-session e connect-pg-simple no PostgreSQL.
 - O acesso a rotas protegidas é controlado por middleware e componentes frontend.
+- As sessões são armazenadas na tabela `session` para suportar reinícios do servidor e ambientes de produção mais confiáveis.
 
 ### 4.2 Homepage pública
 A homepage exibe:
@@ -321,6 +323,8 @@ O painel administrativo permite:
 ### Autenticação
 - POST /api/register
 - POST /api/login
+- GET /api/auth/google
+- GET /api/auth/google/callback
 - POST /api/logout
 - GET /api/user
 - GET /api/auth/google
@@ -488,6 +492,7 @@ SUPABASE_BUCKET=public
 ### Observações de ambiente
 - A aplicação usa a porta 5000.
 - O backend precisa de PostgreSQL disponível e configurado.
+- As sessões agora são persistidas no PostgreSQL por meio da tabela `session`.
 - Em produção, é necessário garantir os arquivos estáticos e o serviço node.
 
 ---
