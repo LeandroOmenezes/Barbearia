@@ -107,6 +107,8 @@ export interface IStorage {
     id: number,
     status: string,
   ): Promise<Appointment | undefined>;
+  markAppointmentSeenByProfessional(professionalId: number, appointmentId: number): Promise<void>;
+  markAppointmentAsSeen(appointmentId: number): Promise<void>;
 
   // Reviews
   getReviews(): Promise<Review[]>;
@@ -1170,6 +1172,22 @@ export class MemStorage implements IStorage {
   async getAppointmentsByProfessionalId(professionalId: number): Promise<Appointment[]> { return []; }
   async getUnseenCountForProfessional(professionalId: number): Promise<number> { return 0; }
   async markAppointmentsSeenByProfessional(professionalId: number): Promise<void> {}
+  async markAppointmentSeenByProfessional(professionalId: number, appointmentId: number): Promise<void> {
+    const appointment = this.appointments.get(appointmentId);
+    if (!appointment || appointment.professionalId !== professionalId) return;
+    this.appointments.set(appointmentId, {
+      ...appointment,
+      seenByProfessional: true,
+    });
+  }
+  async markAppointmentAsSeen(appointmentId: number): Promise<void> {
+    const appointment = this.appointments.get(appointmentId);
+    if (!appointment) return;
+    this.appointments.set(appointmentId, {
+      ...appointment,
+      seenByProfessional: true,
+    });
+  }
 
   // Review Comments
   async getReviewComments(reviewId: number): Promise<ReviewComment[]> { return []; }
@@ -1942,6 +1960,21 @@ export class DatabaseStorage implements IStorage {
     await db.update(appointments)
       .set({ seenByProfessional: true })
       .where(and(eq(appointments.professionalId, professionalId), eq(appointments.seenByProfessional, false)));
+  }
+
+  async markAppointmentSeenByProfessional(professionalId: number, appointmentId: number): Promise<void> {
+    await db.update(appointments)
+      .set({ seenByProfessional: true })
+      .where(and(
+        eq(appointments.id, appointmentId),
+        eq(appointments.professionalId, professionalId),
+      ));
+  }
+
+  async markAppointmentAsSeen(appointmentId: number): Promise<void> {
+    await db.update(appointments)
+      .set({ seenByProfessional: true })
+      .where(eq(appointments.id, appointmentId));
   }
 }
 

@@ -6,6 +6,7 @@ import { apiRequest } from "@/lib/queryClient";
 import Header from "@/components/ui/header";
 import Footer from "@/components/ui/footer";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Users, CalendarDays, Clock, Phone, Mail, FileText, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 import type { Appointment, Service } from "@shared/schema";
@@ -40,6 +41,14 @@ export default function ProfessionalAppointmentsPage() {
   });
 
   const markSeenMutation = useMutation({
+    mutationFn: (appointmentId: number) => apiRequest("PATCH", `/api/professional/appointments/${appointmentId}/mark-seen`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/professional/unseen-count"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/professional/appointments"] });
+    },
+  });
+
+  const markAllSeenMutation = useMutation({
     mutationFn: () => apiRequest("POST", "/api/professional/appointments/mark-seen"),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/professional/unseen-count"] });
@@ -48,14 +57,8 @@ export default function ProfessionalAppointmentsPage() {
   });
 
   useEffect(() => {
-    if (prof) {
-      markSeenMutation.mutate();
-    }
-  }, [prof?.id]);
-
-  useEffect(() => {
     if (!user) navigate("/auth");
-  }, [user]);
+  }, [user, navigate]);
 
   const getServiceName = (serviceId: number) =>
     services.find(s => s.id === serviceId)?.name ?? `Serviço #${serviceId}`;
@@ -135,6 +138,20 @@ export default function ProfessionalAppointmentsPage() {
               <span className="line-clamp-2">{a.notes}</span>
             </div>
           )}
+
+          {isNew && (
+            <div className="pt-2 border-t border-gray-100">
+              <Button
+                size="sm"
+                variant="secondary"
+                className="w-full"
+                onClick={() => markSeenMutation.mutate(a.id)}
+                disabled={markSeenMutation.isLoading}
+              >
+                Marcar como visto
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     );
@@ -165,6 +182,22 @@ export default function ProfessionalAppointmentsPage() {
         </div>
 
         <div className="container mx-auto px-4 py-8 space-y-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-800">Agendamentos</h2>
+              <p className="text-sm text-gray-500">Veja aqui seus agendamentos e marque como visto quando revisar.</p>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full sm:w-auto"
+              onClick={() => markAllSeenMutation.mutate()}
+              disabled={markAllSeenMutation.isLoading}
+            >
+              Marcar novos como vistos
+            </Button>
+          </div>
+
           {loadingAppts ? (
             <div className="flex justify-center py-20">
               <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />

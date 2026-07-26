@@ -235,8 +235,9 @@ export default function AppointmentForm() {
       setSelectedService("");
       setSelectedDate("");
       setSelectedProfessionalId(null);
-      // Invalidar horários disponíveis para atualizar status visual
+      // Invalidar horários disponíveis e agendamentos para atualizar em todas as páginas
       queryClient.invalidateQueries({ queryKey: ['/api/appointments/available-times'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/appointments'] });
     },
     onError: (error: any) => {
       const serverMsg = error?.message || '';

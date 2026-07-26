@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Check, Clock, X, MessageCircle } from "lucide-react";
+import { Check, Clock, X, MessageCircle, Eye } from "lucide-react";
 
 export default function AppointmentsManagement() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -117,6 +117,15 @@ export default function AppointmentsManagement() {
     },
   });
 
+  const markSeenMutation = useMutation({
+    mutationFn: async (appointmentId: number) => {
+      await apiRequest("PATCH", `/api/appointments/${appointmentId}/mark-seen`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/appointments'] });
+    },
+  });
+
   const getFilteredAppointments = () => {
     if (!appointments) return [];
     if (statusFilter === "all") return appointments;
@@ -140,19 +149,44 @@ export default function AppointmentsManagement() {
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-bold text-gray-800">Agendamentos</h3>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filtrar por status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="pending">Pendentes</SelectItem>
-            <SelectItem value="confirmed">Confirmados</SelectItem>
-            <SelectItem value="completed">Concluídos</SelectItem>
-            <SelectItem value="cancelled">Cancelados</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-3">
+          <h3 className="text-xl font-bold text-gray-800">Agendamentos</h3>
+          {appointments && appointments.filter(a => !a.seenByProfessional).length > 0 && (
+            <span className="bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full">
+              {appointments.filter(a => !a.seenByProfessional).length}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          {appointments && appointments.filter(a => !a.seenByProfessional).length > 0 && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-blue-600 border-blue-600 hover:bg-blue-50"
+              onClick={() => {
+                appointments.filter(a => !a.seenByProfessional).forEach(appointment => {
+                  markSeenMutation.mutate(appointment.id);
+                });
+              }}
+              disabled={markSeenMutation.isPending}
+              title="Marcar todos como visto"
+            >
+              Marcar tudo como visto
+            </Button>
+          )}
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filtrar por status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="pending">Pendentes</SelectItem>
+              <SelectItem value="confirmed">Confirmados</SelectItem>
+              <SelectItem value="completed">Concluídos</SelectItem>
+              <SelectItem value="cancelled">Cancelados</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="overflow-x-auto">
@@ -179,12 +213,17 @@ export default function AppointmentsManagement() {
             </thead>
             <tbody>
               {filteredAppointments.map((appointment) => (
-                <tr key={appointment.id} className="border-t">
+                <tr key={appointment.id} className={`border-t ${!appointment.seenByProfessional ? 'bg-yellow-50' : ''}`}>
                   <td className="py-3 px-4">
-                    <div>
-                      <div className="font-medium">{appointment.name}</div>
-                      <div className="text-sm text-gray-500">{appointment.phone}</div>
-                      <div className="text-sm text-gray-500">{appointment.email}</div>
+                    <div className="flex items-start gap-2">
+                      <div className="flex-1">
+                        <div className="font-medium">{appointment.name}</div>
+                        <div className="text-sm text-gray-500">{appointment.phone}</div>
+                        <div className="text-sm text-gray-500">{appointment.email}</div>
+                      </div>
+                      {!appointment.seenByProfessional && (
+                        <span className="bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">NOVO</span>
+                      )}
                     </div>
                   </td>
                   <td className="py-3 px-4">
@@ -222,9 +261,7 @@ export default function AppointmentsManagement() {
                             disabled={updateStatusMutation.isPending}
                             title="Confirmar e notificar cliente via WhatsApp"
                           >
-                            <Check className="h-4 w-4 mr-1" />
                             Confirmar
-                            <MessageCircle className="h-3 w-3 ml-1 text-green-500" />
                           </Button>
                           <Button
                             size="sm"
@@ -234,9 +271,7 @@ export default function AppointmentsManagement() {
                             disabled={updateStatusMutation.isPending}
                             title="Cancelar e notificar cliente via WhatsApp"
                           >
-                            <X className="h-4 w-4 mr-1" />
                             Cancelar
-                            <MessageCircle className="h-3 w-3 ml-1 text-red-400" />
                           </Button>
                         </>
                       )}
@@ -249,7 +284,6 @@ export default function AppointmentsManagement() {
                             onClick={() => updateStatusMutation.mutate({ id: appointment.id, status: 'completed' })}
                             disabled={updateStatusMutation.isPending}
                           >
-                            <Check className="h-4 w-4 mr-1" />
                             Concluir
                           </Button>
                           <Button
@@ -259,7 +293,6 @@ export default function AppointmentsManagement() {
                             onClick={() => updateStatusMutation.mutate({ id: appointment.id, status: 'pending' })}
                             disabled={updateStatusMutation.isPending}
                           >
-                            <Clock className="h-4 w-4 mr-1" />
                             Pendente
                           </Button>
                         </>
@@ -272,7 +305,6 @@ export default function AppointmentsManagement() {
                           onClick={() => updateStatusMutation.mutate({ id: appointment.id, status: 'pending' })}
                           disabled={updateStatusMutation.isPending}
                         >
-                          <Clock className="h-4 w-4 mr-1" />
                           Reativar
                         </Button>
                       )}

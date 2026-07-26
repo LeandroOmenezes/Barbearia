@@ -1354,6 +1354,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch { res.status(500).json({ message: "Erro interno" }); }
   });
 
+  app.patch("/api/professional/appointments/:id/mark-seen", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Não autenticado" });
+    try {
+      const prof = await storage.getProfessionalByUserId(req.user!.id);
+      if (!prof) return res.status(404).json({ message: "Profissional não encontrado" });
+
+      const appointmentId = Number(req.params.id);
+      if (isNaN(appointmentId)) {
+        return res.status(400).json({ message: "ID de agendamento inválido" });
+      }
+
+      const appointment = await storage.getAppointmentById(appointmentId);
+      if (!appointment || appointment.professionalId !== prof.id) {
+        return res.status(404).json({ message: "Agendamento não encontrado" });
+      }
+
+      await storage.markAppointmentSeenByProfessional(prof.id, appointmentId);
+      res.json({ ok: true });
+    } catch {
+      res.status(500).json({ message: "Erro interno" });
+    }
+  });
+
+  app.patch("/api/appointments/:id/mark-seen", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Não autenticado" });
+    try {
+      const appointmentId = Number(req.params.id);
+      if (isNaN(appointmentId)) {
+        return res.status(400).json({ message: "ID de agendamento inválido" });
+      }
+
+      const appointment = await storage.getAppointmentById(appointmentId);
+      if (!appointment) {
+        return res.status(404).json({ message: "Agendamento não encontrado" });
+      }
+
+      await storage.markAppointmentAsSeen(appointmentId);
+      res.json({ ok: true });
+    } catch {
+      res.status(500).json({ message: "Erro interno" });
+    }
+  });
+
   // === Password Reset Routes ===
   app.post("/api/forgot-password", async (req: Request, res: Response) => {
     try {
