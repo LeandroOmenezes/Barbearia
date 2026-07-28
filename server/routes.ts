@@ -662,7 +662,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const generateTimeSlots = (intervalMin: number) => {
         const slots = [];
         const startTime = 8 * 60; // 08:00
-        const endTime = 19 * 60;  // 19:00
+        const endTime = 20 * 60;  // 20:00
         for (let time = startTime; time < endTime; time += intervalMin) {
           const hour = Math.floor(time / 60);
           const minute = time % 60;
