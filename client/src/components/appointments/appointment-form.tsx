@@ -488,7 +488,7 @@ export default function AppointmentForm() {
                   </FormControl>
                   <SelectContent>
                     {(Array.isArray(services) ? services : []).map((service) => (
-                      <SelectItem key={service.id} value={service.id}>
+                      <SelectItem key={service.id} value={String(service.id)}>
                         {service.name}
                       </SelectItem>
                     ))}
