@@ -158,7 +158,7 @@ export default function ProfessionalsManagement() {
   const ProfessionalCard = ({ p }: { p: Professional }) => (
     <Card className={`relative ${!p.active ? "opacity-60" : ""}`}>
       <CardContent className="pt-5">
-        <div className="flex items-start gap-4">
+        <div className="flex flex-col sm:flex-row items-start gap-4">
           {/* Photo */}
           <div className="relative shrink-0">
             <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-200 bg-gray-100 flex items-center justify-center">
@@ -188,7 +188,7 @@ export default function ProfessionalsManagement() {
 
           {/* Info or edit form */}
           {editingId === p.id ? (
-            <div className="flex-1">
+            <div className="flex-1 min-w-0 w-full">
               <Form {...editForm}>
                 <form onSubmit={editForm.handleSubmit(d => updateMutation.mutate({ id: p.id, data: d }))} className="space-y-3">
                   <FormField control={editForm.control} name="name" render={({ field }) => (
@@ -249,33 +249,40 @@ export default function ProfessionalsManagement() {
                     </FormItem>
                   )} />
                   <div>
-                    <FormLabel className="flex items-center gap-1 text-xs text-gray-600 mb-1">
+                    <p className="flex items-center gap-1 text-xs text-gray-600 mb-1">
                       <UtensilsCrossed className="w-3 h-3" />Horário de almoço (opcional)
-                    </FormLabel>
-                    <div className="flex items-center gap-2">
+                    </p>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                       <FormField control={editForm.control} name="lunchBreakStart" render={({ field }) => (
-                        <FormItem className="flex-1">
+                        <FormItem className="flex-1 w-full">
                           <FormControl>
                             <Input type="time" {...field} value={field.value ?? ""} onChange={e => field.onChange(e.target.value || null)} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )} />
-                      <span className="text-xs text-gray-400">até</span>
+                      <span className="text-xs text-gray-400 self-start sm:self-auto">até</span>
                       <FormField control={editForm.control} name="lunchBreakEnd" render={({ field }) => (
-                        <FormItem className="flex-1">
+                        <FormItem className="flex-1 w-full">
                           <FormControl>
                             <Input type="time" {...field} value={field.value ?? ""} onChange={e => field.onChange(e.target.value || null)} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )} />
-                      <button type="button" className="text-xs text-gray-400 hover:text-red-500 transition" onClick={() => { editForm.setValue("lunchBreakStart", null); editForm.setValue("lunchBreakEnd", null); }}>
+                    </div>
+                    <div className="mt-1 flex justify-end">
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 transition"
+                        onClick={() => { editForm.setValue("lunchBreakStart", null); editForm.setValue("lunchBreakEnd", null); }}
+                      >
                         <X className="w-3 h-3" />
+                        Limpar
                       </button>
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <Button type="submit" size="sm" disabled={updateMutation.isPending}>
                       <Save className="w-3 h-3 mr-1" />Salvar
                     </Button>
@@ -423,9 +430,9 @@ export default function ProfessionalsManagement() {
                 )} />
 
                 <div>
-                  <FormLabel className="flex items-center gap-1">
+                  <p className="flex items-center gap-1 text-sm font-medium leading-none">
                     <UtensilsCrossed className="w-4 h-4" />Horário de almoço (opcional)
-                  </FormLabel>
+                  </p>
                   <div className="flex items-center gap-2 mt-1">
                     <FormField control={form.control} name="lunchBreakStart" render={({ field }) => (
                       <FormItem className="flex-1">

@@ -146,7 +146,7 @@ export default function ProfessionalAppointmentsPage() {
                 variant="secondary"
                 className="w-full"
                 onClick={() => markSeenMutation.mutate(a.id)}
-                disabled={markSeenMutation.isLoading}
+                disabled={markSeenMutation.isPending}
               >
                 Marcar como visto
               </Button>
@@ -192,7 +192,7 @@ export default function ProfessionalAppointmentsPage() {
               variant="outline"
               className="w-full sm:w-auto"
               onClick={() => markAllSeenMutation.mutate()}
-              disabled={markAllSeenMutation.isLoading}
+              disabled={markAllSeenMutation.isPending}
             >
               Marcar novos como vistos
             </Button>
