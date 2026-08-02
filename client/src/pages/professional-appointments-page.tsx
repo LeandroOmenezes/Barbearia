@@ -1,8 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/ui/header";
 import Footer from "@/components/ui/footer";
 import { Badge } from "@/components/ui/badge";
@@ -23,9 +24,12 @@ function formatDate(dateStr: string) {
 }
 
 export default function ProfessionalAppointmentsPage() {
+  const SEEN_FEEDBACK_MS = 2500;
   const { user } = useAuth();
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [markAllJustSeen, setMarkAllJustSeen] = useState(false);
 
   const { data: prof, isLoading: loadingProf } = useQuery<{ id: number; name: string; photoBase64?: string; photoMimeType?: string }>({
     queryKey: ["/api/professional/me"],
@@ -42,17 +46,26 @@ export default function ProfessionalAppointmentsPage() {
 
   const markSeenMutation = useMutation({
     mutationFn: (appointmentId: number) => apiRequest("PATCH", `/api/professional/appointments/${appointmentId}/mark-seen`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/professional/unseen-count"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/professional/appointments"] });
-    },
   });
 
   const markAllSeenMutation = useMutation({
     mutationFn: () => apiRequest("POST", "/api/professional/appointments/mark-seen"),
     onSuccess: () => {
+      setMarkAllJustSeen(true);
       queryClient.invalidateQueries({ queryKey: ["/api/professional/unseen-count"] });
       queryClient.invalidateQueries({ queryKey: ["/api/professional/appointments"] });
+      window.setTimeout(() => setMarkAllJustSeen(false), SEEN_FEEDBACK_MS);
+      toast({
+        title: "Agendamentos atualizados",
+        description: "Todos os agendamentos novos foram marcados como vistos.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Não foi possível concluir",
+        description: "Tente novamente em instantes.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -62,6 +75,32 @@ export default function ProfessionalAppointmentsPage() {
 
   const getServiceName = (serviceId: number) =>
     services.find(s => s.id === serviceId)?.name ?? `Serviço #${serviceId}`;
+
+  const markOneAsSeen = async (appointmentId: number) => {
+    try {
+      await markSeenMutation.mutateAsync(appointmentId);
+
+      toast({
+        title: "Agendamento marcado",
+        description: "Esse agendamento foi marcado como visto.",
+      });
+
+      window.setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["/api/professional/unseen-count"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/professional/appointments"] });
+      }, SEEN_FEEDBACK_MS);
+
+      return true;
+    } catch {
+      toast({
+        title: "Não foi possível marcar",
+        description: "Tente novamente em instantes.",
+        variant: "destructive",
+      });
+
+      return false;
+    }
+  };
 
   const actionButtonClass = "border-primary/40 text-primary font-semibold bg-primary/5 hover:bg-primary hover:text-white hover:border-primary shadow-sm transition-colors focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-1 disabled:opacity-60 disabled:cursor-not-allowed";
 
@@ -95,13 +134,35 @@ export default function ProfessionalAppointmentsPage() {
   }
 
   const AppointmentCard = ({ a }: { a: Appointment }) => {
+    const [localSeenState, setLocalSeenState] = useState<"idle" | "processing" | "seen">("idle");
     const status = STATUS_MAP[a.status ?? "pending"] ?? STATUS_MAP.pending;
     const StatusIcon = status.icon;
-    const isNew = !a.seenByProfessional;
+    const isProcessingMark = localSeenState === "processing";
+    const isJustSeen = localSeenState === "seen";
+    const isNew = !a.seenByProfessional && !isJustSeen;
+    const showSeenButton = !a.seenByProfessional || isProcessingMark || isJustSeen;
+
+    const handleCardMarkAsSeen = async () => {
+      setLocalSeenState("processing");
+      const ok = await markOneAsSeen(a.id);
+
+      if (!ok) {
+        setLocalSeenState("idle");
+        return;
+      }
+
+      setLocalSeenState("seen");
+      window.setTimeout(() => setLocalSeenState("idle"), SEEN_FEEDBACK_MS);
+    };
+
     return (
       <Card className={`relative transition-all ${isNew ? "ring-2 ring-primary/40 shadow-md" : ""}`}>
-        {isNew && (
-          <span className="absolute -top-2 -right-2 bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">NOVO</span>
+        {!a.seenByProfessional && (
+          <span
+            className={`absolute -top-2 -right-2 bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow transition-all duration-300 ${isJustSeen ? "opacity-0 scale-90" : "opacity-100 scale-100"}`}
+          >
+            NOVO
+          </span>
         )}
         <CardContent className="pt-4 pb-4 space-y-3">
           <div className="flex items-start justify-between gap-2">
@@ -141,16 +202,19 @@ export default function ProfessionalAppointmentsPage() {
             </div>
           )}
 
-          {isNew && (
+          {showSeenButton && (
             <div className="pt-2 border-t border-gray-100">
               <Button
                 size="sm"
                 variant="outline"
-                className={`w-full ${actionButtonClass}`}
-                onClick={() => markSeenMutation.mutate(a.id)}
-                disabled={markSeenMutation.isPending}
+                className={`w-full ${actionButtonClass} ${isJustSeen ? "border-green-500 bg-green-600 text-white hover:bg-green-600 hover:text-white" : ""}`}
+                onClick={handleCardMarkAsSeen}
+                disabled={isProcessingMark || isJustSeen}
               >
-                {markSeenMutation.isPending ? "Marcando..." : "Marcar como visto"}
+                <span className="inline-flex items-center gap-1.5">
+                  {isJustSeen && <CheckCircle2 className="h-4 w-4" />}
+                  {isProcessingMark ? "Marcando..." : isJustSeen ? "Visto" : "Marcar como visto"}
+                </span>
               </Button>
             </div>
           )}
@@ -192,11 +256,14 @@ export default function ProfessionalAppointmentsPage() {
             <Button
               size="sm"
               variant="outline"
-              className={`w-full sm:w-auto ${actionButtonClass}`}
+              className={`w-full sm:w-auto ${actionButtonClass} ${markAllJustSeen ? "border-green-500 bg-green-600 text-white hover:bg-green-600 hover:text-white" : ""}`}
               onClick={() => markAllSeenMutation.mutate()}
-              disabled={markAllSeenMutation.isPending}
+              disabled={markAllSeenMutation.isPending || markAllJustSeen}
             >
-              {markAllSeenMutation.isPending ? "Marcando..." : "Marcar novos como vistos"}
+              <span className="inline-flex items-center gap-1.5">
+                {markAllJustSeen && <CheckCircle2 className="h-4 w-4" />}
+                {markAllSeenMutation.isPending ? "Marcando..." : markAllJustSeen ? "Todos vistos" : "Marcar novos como vistos"}
+              </span>
             </Button>
           </div>
 
