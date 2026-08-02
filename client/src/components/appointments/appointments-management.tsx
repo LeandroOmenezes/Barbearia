@@ -90,8 +90,13 @@ export default function AppointmentsManagement() {
   };
 
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: number; status: string }) => {
+    mutationFn: async ({ id, status, markAsSeen }: { id: number; status: string; markAsSeen?: boolean }) => {
       const res = await apiRequest("PATCH", `/api/appointments/${id}/status`, { status });
+
+      if (status === 'confirmed' && markAsSeen) {
+        await apiRequest("PATCH", `/api/appointments/${id}/mark-seen`, {});
+      }
+
       return { appointment: await res.json(), status };
     },
     onSuccess: ({ appointment, status }) => {
@@ -144,6 +149,14 @@ export default function AppointmentsManagement() {
     if (!professionalId) return null;
     const p = professionals.find(pr => pr.id === professionalId);
     return p ? p.name : null;
+  };
+
+  const handleConfirmAppointment = (appointment: Appointment) => {
+    updateStatusMutation.mutate({
+      id: appointment.id,
+      status: 'confirmed',
+      markAsSeen: !appointment.seenByProfessional,
+    });
   };
 
   return (
@@ -248,9 +261,9 @@ export default function AppointmentsManagement() {
                           size="sm"
                           variant="outline"
                           className="text-green-600 border-green-600 hover:bg-green-50"
-                          onClick={() => updateStatusMutation.mutate({ id: appointment.id, status: 'confirmed' })}
+                          onClick={() => handleConfirmAppointment(appointment)}
                           disabled={updateStatusMutation.isPending}
-                          title="Confirmar e notificar cliente via WhatsApp"
+                          title="Confirmar, notificar no WhatsApp e marcar como visto"
                         >
                           Confirmar
                         </Button>
@@ -362,9 +375,9 @@ export default function AppointmentsManagement() {
                                 size="sm"
                                 variant="outline"
                                 className="text-green-600 border-green-600 hover:bg-green-50"
-                                onClick={() => updateStatusMutation.mutate({ id: appointment.id, status: 'confirmed' })}
+                                onClick={() => handleConfirmAppointment(appointment)}
                                 disabled={updateStatusMutation.isPending}
-                                title="Confirmar e notificar cliente via WhatsApp"
+                                title="Confirmar, notificar no WhatsApp e marcar como visto"
                               >
                                 Confirmar
                               </Button>
