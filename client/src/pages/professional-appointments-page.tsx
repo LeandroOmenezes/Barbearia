@@ -63,6 +63,8 @@ export default function ProfessionalAppointmentsPage() {
   const getServiceName = (serviceId: number) =>
     services.find(s => s.id === serviceId)?.name ?? `Serviço #${serviceId}`;
 
+  const actionButtonClass = "border-primary/40 text-primary font-semibold bg-primary/5 hover:bg-primary hover:text-white hover:border-primary shadow-sm transition-colors focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-1 disabled:opacity-60 disabled:cursor-not-allowed";
+
   const upcoming = appointments.filter(a => a.status !== "cancelled" && new Date(`${a.date}T${a.time}`) >= new Date());
   const past = appointments.filter(a => a.status === "cancelled" || new Date(`${a.date}T${a.time}`) < new Date());
 
@@ -143,12 +145,12 @@ export default function ProfessionalAppointmentsPage() {
             <div className="pt-2 border-t border-gray-100">
               <Button
                 size="sm"
-                variant="secondary"
-                className="w-full"
+                variant="outline"
+                className={`w-full ${actionButtonClass}`}
                 onClick={() => markSeenMutation.mutate(a.id)}
                 disabled={markSeenMutation.isPending}
               >
-                Marcar como visto
+                {markSeenMutation.isPending ? "Marcando..." : "Marcar como visto"}
               </Button>
             </div>
           )}
@@ -190,11 +192,11 @@ export default function ProfessionalAppointmentsPage() {
             <Button
               size="sm"
               variant="outline"
-              className="w-full sm:w-auto"
+              className={`w-full sm:w-auto ${actionButtonClass}`}
               onClick={() => markAllSeenMutation.mutate()}
               disabled={markAllSeenMutation.isPending}
             >
-              Marcar novos como vistos
+              {markAllSeenMutation.isPending ? "Marcando..." : "Marcar novos como vistos"}
             </Button>
           </div>
 
