@@ -1,6 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
+import { Link } from "wouter";
 import Header from "@/components/ui/header";
 import Footer from "@/components/ui/footer";
 import { Calendar, Clock, User, Phone, Mail, Star, Pencil, Check, X } from "lucide-react";
@@ -81,6 +82,14 @@ export default function ProfilePage() {
     queryKey: ["/api/categories"],
     queryFn: getQueryFn({ on401: "returnNull" }),
   });
+
+  const { data: unseenData } = useQuery<{ count: number; isProfessional?: boolean }>({
+    queryKey: ["/api/professional/unseen-count"],
+    enabled: !!user,
+  });
+
+  const professionalUnseenCount = unseenData?.count ?? 0;
+  const isProfessional = unseenData?.isProfessional === true;
 
   const updatePhoneMutation = useMutation({
     mutationFn: async (phone: string) => {
@@ -237,6 +246,28 @@ export default function ProfilePage() {
                   </div>
                 </div>
               </div>
+
+              {isProfessional && (
+                <Card className="mb-8 bg-white border-gray-200">
+                  <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                      <p className="text-sm text-blue-900 font-semibold">Agendamentos recebidos</p>
+                      <p className="text-sm text-slate-700">Acesse seus agendamentos recebidos e acompanhe os novos.</p>
+                    </div>
+                    <Link
+                      href="/professional-appointments"
+                      className="inline-flex items-center justify-center gap-2 !bg-blue-600 border border-blue-600 !text-white px-4 py-2 rounded-md font-medium hover:!bg-blue-700 hover:border-blue-700 transition-colors"
+                    >
+                      Meus Agendamentos
+                      {professionalUnseenCount > 0 && (
+                        <span className="bg-white text-blue-700 text-[11px] font-bold min-w-5 h-5 px-1.5 inline-flex items-center justify-center rounded-full">
+                          {professionalUnseenCount > 9 ? "9+" : professionalUnseenCount}
+                        </span>
+                      )}
+                    </Link>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Meus Agendamentos */}
               <Card>

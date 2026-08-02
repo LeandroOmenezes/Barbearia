@@ -66,7 +66,7 @@ export default function Header() {
             <div className="flex items-center space-x-4">
               <Link
                 href="/profile"
-                className={`group flex items-center space-x-3 bg-gray-100 px-3 py-2 rounded-full transition-colors duration-200 hover:bg-gray-200 cursor-pointer ${location === "/profile" ? "ring-2 ring-blue-200" : ""}`}
+                className={`group relative flex items-center space-x-3 bg-gray-100 px-3 py-2 rounded-full transition-colors duration-200 hover:bg-gray-200 cursor-pointer ${location === "/profile" ? "ring-2 ring-blue-200" : ""}`}
               >
                 <Avatar 
                   userId={user.id} 
@@ -80,20 +80,12 @@ export default function Header() {
                     <div className="text-xs text-blue-600 font-medium">Administrador</div>
                   )}
                 </div>
+                {isProfessional && unseenCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold min-w-4 h-4 px-1 flex items-center justify-center rounded-full shadow">
+                    {unseenCount > 9 ? "9+" : unseenCount}
+                  </span>
+                )}
               </Link>
-              {isProfessional && (
-                <Link
-                  href="/professional-appointments"
-                  className={`relative text-gray-700 hover:text-blue-500 transition-colors duration-200 flex items-center gap-1 ${location === "/professional-appointments" ? "text-blue-500 font-medium" : ""}`}
-                >
-                  Meus Agendamentos
-                  {unseenCount > 0 && (
-                    <span className="absolute -top-2 -right-4 bg-red-500 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full shadow">
-                      {unseenCount > 9 ? "9+" : unseenCount}
-                    </span>
-                  )}
-                </Link>
-              )}
               {user.isAdmin && <AdminMenu />}
               <button 
                 onClick={() => logoutMutation.mutate()}
@@ -126,7 +118,7 @@ export default function Header() {
             <>
               <Link
                 href="/profile"
-                className="group flex items-center space-x-3 bg-gray-100 px-3 py-2 rounded-lg mb-3 hover:bg-gray-200 transition-colors cursor-pointer"
+                className="group relative flex items-center space-x-3 bg-gray-100 px-3 py-2 rounded-lg mb-3 hover:bg-gray-200 transition-colors cursor-pointer"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <Avatar 
@@ -141,21 +133,12 @@ export default function Header() {
                     <div className="text-xs text-blue-600 font-medium">Administrador</div>
                   )}
                 </div>
+                {isProfessional && unseenCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold min-w-5 h-5 px-1 flex items-center justify-center rounded-full">
+                    {unseenCount > 9 ? "9+" : unseenCount}
+                  </span>
+                )}
               </Link>
-              {isProfessional && (
-                <Link
-                  href="/professional-appointments"
-                  className="flex items-center gap-2 text-gray-700 py-2 hover:text-blue-500"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Meus Agendamentos
-                  {unseenCount > 0 && (
-                    <span className="bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full">
-                      {unseenCount > 9 ? "9+" : unseenCount}
-                    </span>
-                  )}
-                </Link>
-              )}
               {user.isAdmin && (
                 <div className="py-2">
                   <AdminMenu />
