@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProfileImageUpload } from "@/components/profile/profile-image-upload";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -163,6 +164,159 @@ export default function ProfilePage() {
     }
   };
 
+  const personalAppointmentsSection = (
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Calendar className="w-5 h-5" />
+            <span>Meus Agendamentos Pessoais</span>
+          </CardTitle>
+          <CardDescription>
+            Acompanhe os horários que você marcou como cliente
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {appointmentsLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+              <p className="mt-2 text-gray-600">Carregando agendamentos...</p>
+            </div>
+          ) : myAppointments.length === 0 ? (
+            <div className="text-center py-8">
+              <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum agendamento encontrado</h3>
+              <p className="text-gray-600">Você ainda não possui agendamentos. Que tal agendar um serviço?</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {myAppointments.map((appointment) => {
+                const serviceData = getServiceData(appointment.serviceId);
+                const categoryData = getCategoryData(appointment.categoryId);
+
+                return (
+                  <div key={appointment.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                    <div className="space-y-3">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-2 sm:space-y-0">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-2">
+                            {serviceData && (
+                              <i className={`${serviceData.icon} text-blue-500`}></i>
+                            )}
+                            <h3 className="font-semibold text-gray-900">
+                              {serviceData?.name || `Serviço #${appointment.serviceId}`}
+                            </h3>
+                          </div>
+                          {categoryData && (
+                            <p className="text-sm text-gray-600 mb-1">
+                              <i className={`${categoryData.icon} mr-1`}></i>
+                              {categoryData.name}
+                            </p>
+                          )}
+                          {serviceData && serviceData.minPrice && (
+                            <p className="text-sm text-green-600 font-medium">
+                              A partir de R$ {serviceData.minPrice.toFixed(2).replace('.', ',')}
+                            </p>
+                          )}
+                        </div>
+                        <Badge className={`${getStatusColor(appointment.status)} border flex items-center space-x-1 flex-shrink-0`}>
+                          <span>{getStatusIcon(appointment.status)}</span>
+                          <span>{getStatusText(appointment.status)}</span>
+                        </Badge>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-gray-600">
+                        <div className="flex items-center space-x-2">
+                          <Calendar className="w-4 h-4 flex-shrink-0" />
+                          <span>{formatDate(appointment.date)}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Clock className="w-4 h-4 flex-shrink-0" />
+                          <span>{appointment.time}</span>
+                        </div>
+                      </div>
+
+                      {appointment.notes && (
+                        <div className="mt-3 p-3 bg-blue-50 rounded-md border-l-4 border-blue-200">
+                          <p className="text-sm text-gray-700">
+                            <strong className="text-blue-800">Observações:</strong> {appointment.notes}
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="text-xs text-gray-500 pt-2 border-t border-gray-100">
+                        Agendamento #{appointment.id} • Criado em: {new Date(appointment.createdAt).toLocaleDateString('pt-BR')} às{' '}
+                        {new Date(appointment.createdAt).toLocaleTimeString('pt-BR')}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
+        <Card>
+          <CardContent className="p-4 text-center">
+            <Calendar className="w-6 h-6 text-blue-500 mx-auto mb-2" />
+            <div className="text-xl font-bold text-gray-900">{myAppointments.length}</div>
+            <div className="text-xs text-gray-600">Total</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4 text-center">
+            <div className="text-lg mb-2">✅</div>
+            <div className="text-xl font-bold text-green-600">
+              {myAppointments.filter(a => a.status === 'completed').length}
+            </div>
+            <div className="text-xs text-gray-600">Realizados</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4 text-center">
+            <div className="text-lg mb-2">📅</div>
+            <div className="text-xl font-bold text-blue-600">
+              {myAppointments.filter(a => a.status === 'confirmed').length}
+            </div>
+            <div className="text-xs text-gray-600">Confirmados</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4 text-center">
+            <div className="text-lg mb-2">⏳</div>
+            <div className="text-xl font-bold text-yellow-600">
+              {myAppointments.filter(a => a.status === 'pending').length}
+            </div>
+            <div className="text-xs text-gray-600">Pendentes</div>
+          </CardContent>
+        </Card>
+      </div>
+    </>
+  );
+
+  const professionalAppointmentsSection = (
+    <Card className="bg-white border-gray-200">
+      <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <p className="text-xs uppercase tracking-wide text-blue-700 font-semibold">Área profissional</p>
+          <p className="text-sm text-blue-900 font-semibold">Solicitações recebidas de clientes</p>
+          <p className="text-sm text-slate-700">Revise novos pedidos e acompanhe os agendamentos da sua agenda profissional.</p>
+        </div>
+        <Link
+          href="/professional-appointments"
+          className="inline-flex items-center justify-center gap-2 !bg-blue-600 border border-blue-600 !text-white px-4 py-2 rounded-md font-medium hover:!bg-blue-700 hover:border-blue-700 transition-colors"
+        >
+          Ver solicitações recebidas
+        </Link>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <div className="font-sans bg-gray-100 text-gray-800 min-h-screen flex flex-col">
       <Header />
@@ -247,160 +401,45 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {isProfessional && (
-                <Card className="mb-8 bg-white border-gray-200">
-                  <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <div>
-                      <p className="text-sm text-blue-900 font-semibold">Agendamentos recebidos</p>
-                      <p className="text-sm text-slate-700">Acesse seus agendamentos recebidos e acompanhe os novos.</p>
-                    </div>
-                    <Link
-                      href="/professional-appointments"
-                      className="inline-flex items-center justify-center gap-2 !bg-blue-600 border border-blue-600 !text-white px-4 py-2 rounded-md font-medium hover:!bg-blue-700 hover:border-blue-700 transition-colors"
+              {isProfessional ? (
+                <Tabs defaultValue="personal" className="mb-8">
+                  <TabsList className="w-full sm:w-auto mb-3 grid grid-cols-2 h-auto p-1 bg-slate-100 rounded-lg">
+                    <TabsTrigger
+                      value="personal"
+                      className="h-10 font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:border-blue-600 focus-visible:ring-1 focus-visible:ring-blue-300 focus-visible:ring-offset-0"
                     >
-                      Meus Agendamentos
+                      Cliente
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="professional"
+                      className="h-10 font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:border-blue-600 focus-visible:ring-1 focus-visible:ring-blue-300 focus-visible:ring-offset-0 gap-2"
+                    >
+                      Atendimento
                       {professionalUnseenCount > 0 && (
-                        <span className="bg-white text-blue-700 text-[11px] font-bold min-w-5 h-5 px-1.5 inline-flex items-center justify-center rounded-full">
+                        <span className="bg-blue-600 text-white text-[11px] font-bold min-w-5 h-5 px-1.5 inline-flex items-center justify-center rounded-full">
                           {professionalUnseenCount > 9 ? "9+" : professionalUnseenCount}
                         </span>
                       )}
-                    </Link>
-                  </CardContent>
-                </Card>
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="personal">
+                    <p className="text-xs text-slate-500 mb-3">
+                      Seus horários marcados como cliente.
+                    </p>
+                    {personalAppointmentsSection}
+                  </TabsContent>
+
+                  <TabsContent value="professional">
+                    <p className="text-xs text-slate-500 mb-3">
+                      Pedidos recebidos para atender.
+                    </p>
+                    {professionalAppointmentsSection}
+                  </TabsContent>
+                </Tabs>
+              ) : (
+                personalAppointmentsSection
               )}
-
-              {/* Meus Agendamentos */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Calendar className="w-5 h-5" />
-                    <span>Meus Agendamentos</span>
-                  </CardTitle>
-                  <CardDescription>
-                    Visualize e acompanhe o status dos seus agendamentos
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {appointmentsLoading ? (
-                    <div className="text-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-                      <p className="mt-2 text-gray-600">Carregando agendamentos...</p>
-                    </div>
-                  ) : myAppointments.length === 0 ? (
-                    <div className="text-center py-8">
-                      <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum agendamento encontrado</h3>
-                      <p className="text-gray-600">Você ainda não possui agendamentos. Que tal agendar um serviço?</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {myAppointments.map((appointment) => {
-                        const serviceData = getServiceData(appointment.serviceId);
-                        const categoryData = getCategoryData(appointment.categoryId);
-
-                        return (
-                          <div key={appointment.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                            <div className="space-y-3">
-                              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-2 sm:space-y-0">
-                                <div className="flex-1">
-                                  <div className="flex items-center space-x-2 mb-2">
-                                    {serviceData && (
-                                      <i className={`${serviceData.icon} text-blue-500`}></i>
-                                    )}
-                                    <h3 className="font-semibold text-gray-900">
-                                      {serviceData?.name || `Serviço #${appointment.serviceId}`}
-                                    </h3>
-                                  </div>
-                                  {categoryData && (
-                                    <p className="text-sm text-gray-600 mb-1">
-                                      <i className={`${categoryData.icon} mr-1`}></i>
-                                      {categoryData.name}
-                                    </p>
-                                  )}
-                                  {serviceData && serviceData.minPrice && (
-                                    <p className="text-sm text-green-600 font-medium">
-                                      A partir de R$ {serviceData.minPrice.toFixed(2).replace('.', ',')}
-                                    </p>
-                                  )}
-                                </div>
-                                <Badge className={`${getStatusColor(appointment.status)} border flex items-center space-x-1 flex-shrink-0`}>
-                                  <span>{getStatusIcon(appointment.status)}</span>
-                                  <span>{getStatusText(appointment.status)}</span>
-                                </Badge>
-                              </div>
-
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-gray-600">
-                                <div className="flex items-center space-x-2">
-                                  <Calendar className="w-4 h-4 flex-shrink-0" />
-                                  <span>{formatDate(appointment.date)}</span>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                  <Clock className="w-4 h-4 flex-shrink-0" />
-                                  <span>{appointment.time}</span>
-                                </div>
-                              </div>
-
-                              {appointment.notes && (
-                                <div className="mt-3 p-3 bg-blue-50 rounded-md border-l-4 border-blue-200">
-                                  <p className="text-sm text-gray-700">
-                                    <strong className="text-blue-800">Observações:</strong> {appointment.notes}
-                                  </p>
-                                </div>
-                              )}
-
-                              <div className="text-xs text-gray-500 pt-2 border-t border-gray-100">
-                                Agendamento #{appointment.id} • Criado em: {new Date(appointment.createdAt).toLocaleDateString('pt-BR')} às{' '}
-                                {new Date(appointment.createdAt).toLocaleTimeString('pt-BR')}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Estatísticas Rápidas */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-                <Card>
-                  <CardContent className="p-4 text-center">
-                    <Calendar className="w-6 h-6 text-blue-500 mx-auto mb-2" />
-                    <div className="text-xl font-bold text-gray-900">{myAppointments.length}</div>
-                    <div className="text-xs text-gray-600">Total</div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-4 text-center">
-                    <div className="text-lg mb-2">✅</div>
-                    <div className="text-xl font-bold text-green-600">
-                      {myAppointments.filter(a => a.status === 'completed').length}
-                    </div>
-                    <div className="text-xs text-gray-600">Realizados</div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-4 text-center">
-                    <div className="text-lg mb-2">📅</div>
-                    <div className="text-xl font-bold text-blue-600">
-                      {myAppointments.filter(a => a.status === 'confirmed').length}
-                    </div>
-                    <div className="text-xs text-gray-600">Confirmados</div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-4 text-center">
-                    <div className="text-lg mb-2">⏳</div>
-                    <div className="text-xl font-bold text-yellow-600">
-                      {myAppointments.filter(a => a.status === 'pending').length}
-                    </div>
-                    <div className="text-xs text-gray-600">Pendentes</div>
-                  </CardContent>
-                </Card>
-              </div>
 
             </div>
           </div>

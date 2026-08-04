@@ -242,7 +242,7 @@ export default function ProfessionalAppointmentsPage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">{prof.name}</h1>
-              <p className="text-gray-500 text-sm">Seus agendamentos</p>
+              <p className="text-gray-500 text-sm">Área profissional: solicitações recebidas</p>
             </div>
           </div>
         </div>
@@ -250,8 +250,8 @@ export default function ProfessionalAppointmentsPage() {
         <div className="container mx-auto px-4 py-8 space-y-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h2 className="text-lg font-semibold text-gray-800">Agendamentos</h2>
-              <p className="text-sm text-gray-500">Veja aqui seus agendamentos e marque como visto quando revisar.</p>
+              <h2 className="text-lg font-semibold text-gray-800">Solicitações recebidas</h2>
+              <p className="text-sm text-gray-500">Veja os pedidos dos clientes e marque como visto quando revisar.</p>
             </div>
             <Button
               size="sm"
