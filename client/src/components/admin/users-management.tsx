@@ -100,6 +100,31 @@ export default function UsersManagement() {
     return date.toLocaleDateString('pt-BR');
   };
 
+  const getRolePriority = (user: User) => {
+    if (user.isMaster) return 0;
+    if (user.isAdmin) return 1;
+    if (professionalUserIds.has(user.id)) return 2;
+    return 3;
+  };
+
+  const sortedUsers = [...(users ?? [])].sort((a, b) => {
+    const roleDiff = getRolePriority(a) - getRolePriority(b);
+    if (roleDiff !== 0) return roleDiff;
+
+    const createdAtA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const createdAtB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    const safeCreatedAtA = Number.isNaN(createdAtA) ? 0 : createdAtA;
+    const safeCreatedAtB = Number.isNaN(createdAtB) ? 0 : createdAtB;
+    if (safeCreatedAtA !== safeCreatedAtB) return safeCreatedAtA - safeCreatedAtB;
+
+    const nameA = (a.name || a.username || "").toLocaleLowerCase("pt-BR");
+    const nameB = (b.name || b.username || "").toLocaleLowerCase("pt-BR");
+    const nameDiff = nameA.localeCompare(nameB, "pt-BR");
+    if (nameDiff !== 0) return nameDiff;
+
+    return a.id - b.id;
+  });
+
   const getRoleBadge = (user: User) => {
     if (user.isMaster) {
       return (
@@ -134,7 +159,7 @@ export default function UsersManagement() {
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md">
+    <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
       <div className="flex justify-between items-center mb-2">
         <h3 className="text-xl font-bold text-gray-800">Gerenciar Usuários</h3>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
@@ -217,7 +242,7 @@ export default function UsersManagement() {
         <span className="inline-flex items-center gap-1"><Scissors className="w-3 h-3 text-pink-600" /> <strong>Profissional</strong> — vinculado a um perfil profissional</span>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto rounded-lg border border-gray-100">
         {isLoading ? (
           <div className="p-6 text-center">
             <p className="text-gray-500">Carregando usuários...</p>
@@ -228,22 +253,29 @@ export default function UsersManagement() {
             <p className="text-gray-400">Crie um novo usuário para começar.</p>
           </div>
         ) : (
-          <table className="min-w-full">
+          <table className="min-w-full table-fixed">
+            <colgroup>
+              <col className="w-[34%]" />
+              <col className="w-[17%]" />
+              <col className="w-[16%]" />
+              <col className="w-[13%]" />
+              <col className="w-[20%]" />
+            </colgroup>
             <thead>
-              <tr className="bg-gray-50">
-                <th className="py-3 px-4 text-left">Usuário</th>
-                <th className="py-3 px-4 text-left">Contato</th>
-                <th className="py-3 px-4 text-left">Nível</th>
-                <th className="py-3 px-4 text-left">Criado em</th>
-                <th className="py-3 px-4 text-left">Ações</th>
+              <tr className="bg-gray-50 border-b border-gray-200">
+                <th className="py-3.5 px-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-700">Usuário</th>
+                <th className="py-3.5 px-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-700">Contato</th>
+                <th className="py-3.5 px-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-700">Nível</th>
+                <th className="py-3.5 px-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-700">Criado em</th>
+                <th className="py-3.5 px-4 text-right text-xs font-semibold uppercase tracking-wide text-gray-700">Ações</th>
               </tr>
             </thead>
             <tbody>
-              {users.map((user) => (
-                <tr key={user.id} className="border-t">
-                  <td className="py-3 px-4">
-                    <div>
-                      <div className="font-medium flex items-center gap-1">
+              {sortedUsers.map((user) => (
+                <tr key={user.id} className="border-t border-gray-100 hover:bg-gray-50/60 transition-colors">
+                  <td className="py-4 px-4 align-middle">
+                    <div className="space-y-0.5">
+                      <div className="font-medium flex items-center gap-1.5 text-[1.06rem] leading-snug text-gray-900">
                         {user.isMaster ? (
                           <Crown className="h-4 w-4 text-purple-600" />
                         ) : user.isAdmin ? (
@@ -253,22 +285,22 @@ export default function UsersManagement() {
                         )}
                         {user.name || user.username}
                       </div>
-                      <div className="text-sm text-gray-500">{user.username}</div>
+                      <div className="text-sm text-gray-500 leading-tight">{user.username}</div>
                     </div>
                   </td>
-                  <td className="py-3 px-4">
+                  <td className="py-4 px-4 align-middle">
                     <div className="text-sm">
                       {user.phone ? <div>{user.phone}</div> : <div className="text-gray-400">—</div>}
                     </div>
                   </td>
-                  <td className="py-3 px-4">
+                  <td className="py-4 px-4 align-middle">
                     {getRoleBadge(user)}
                   </td>
-                  <td className="py-3 px-4 text-sm text-gray-500">
+                  <td className="py-4 px-4 align-middle text-sm text-gray-500 whitespace-nowrap">
                     {formatDate(user.createdAt)}
                   </td>
-                  <td className="py-3 px-4">
-                    <div className="flex items-center gap-2">
+                  <td className="py-4 px-4 align-middle">
+                    <div className="flex items-center justify-end gap-2">
                       {/* Toggle Master — only senior master (lower ID) can demote another master */}
                       {currentUser?.isMaster && currentUser?.id !== user.id && user.isAdmin &&
                         (!user.isMaster || (currentUser.id ?? Infinity) < user.id) && (
@@ -276,8 +308,8 @@ export default function UsersManagement() {
                           size="sm"
                           variant="outline"
                           className={user.isMaster
-                            ? "text-purple-600 border-purple-300 hover:bg-purple-50"
-                            : "text-gray-600 border-gray-300 hover:bg-gray-50"
+                            ? "h-9 px-3 text-purple-600 border-purple-300 hover:bg-purple-50"
+                            : "h-9 px-3 text-gray-600 border-gray-300 hover:bg-gray-50"
                           }
                           onClick={() => toggleMasterMutation.mutate({ userId: user.id, isMaster: !user.isMaster })}
                           disabled={toggleMasterMutation.isPending}
@@ -292,7 +324,7 @@ export default function UsersManagement() {
                         <Button
                           size="sm"
                           variant="outline"
-                          className="text-red-600 border-red-600 hover:bg-red-50"
+                          className="h-9 min-w-[110px] px-3 text-red-600 border-red-600 hover:bg-red-50"
                           onClick={() => setUserToDelete(user.id)}
                           disabled={deleteUserMutation.isPending}
                         >
