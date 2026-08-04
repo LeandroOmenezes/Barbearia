@@ -52,6 +52,7 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const [editingPhone, setEditingPhone] = useState(false);
   const [phoneValue, setPhoneValue] = useState("");
+  const currentUserId = user?.id ?? null;
 
   if (authLoading) {
     return (
@@ -59,7 +60,7 @@ export default function ProfilePage() {
         <Header />
         <main className="flex-grow flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
             <p className="mt-2 text-gray-600">Carregando...</p>
           </div>
         </main>
@@ -85,8 +86,8 @@ export default function ProfilePage() {
   });
 
   const { data: unseenData } = useQuery<{ count: number; isProfessional?: boolean }>({
-    queryKey: ["/api/professional/unseen-count"],
-    enabled: !!user,
+    queryKey: ["/api/professional/unseen-count", currentUserId],
+    enabled: !!currentUserId,
   });
 
   const professionalUnseenCount = unseenData?.count ?? 0;
@@ -136,7 +137,7 @@ export default function ProfilePage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'confirmed': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'confirmed': return 'bg-primary/10 text-primary border-primary/25';
       case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'cancelled': return 'bg-red-100 text-red-800 border-red-200';
       case 'completed': return 'bg-green-100 text-green-800 border-green-200';
@@ -179,7 +180,7 @@ export default function ProfilePage() {
         <CardContent>
           {appointmentsLoading ? (
             <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
               <p className="mt-2 text-gray-600">Carregando agendamentos...</p>
             </div>
           ) : myAppointments.length === 0 ? (
@@ -201,7 +202,7 @@ export default function ProfilePage() {
                         <div className="flex-1">
                           <div className="flex items-center space-x-2 mb-2">
                             {serviceData && (
-                              <i className={`${serviceData.icon} text-blue-500`}></i>
+                              <i className={`${serviceData.icon} text-primary`}></i>
                             )}
                             <h3 className="font-semibold text-gray-900">
                               {serviceData?.name || `Serviço #${appointment.serviceId}`}
@@ -237,9 +238,9 @@ export default function ProfilePage() {
                       </div>
 
                       {appointment.notes && (
-                        <div className="mt-3 p-3 bg-blue-50 rounded-md border-l-4 border-blue-200">
+                        <div className="mt-3 p-3 bg-primary/10 rounded-md border-l-4 border-primary/25">
                           <p className="text-sm text-gray-700">
-                            <strong className="text-blue-800">Observações:</strong> {appointment.notes}
+                            <strong className="text-primary">Observações:</strong> {appointment.notes}
                           </p>
                         </div>
                       )}
@@ -260,7 +261,7 @@ export default function ProfilePage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
         <Card>
           <CardContent className="p-4 text-center">
-            <Calendar className="w-6 h-6 text-blue-500 mx-auto mb-2" />
+            <Calendar className="w-6 h-6 text-primary mx-auto mb-2" />
             <div className="text-xl font-bold text-gray-900">{myAppointments.length}</div>
             <div className="text-xs text-gray-600">Total</div>
           </CardContent>
@@ -279,7 +280,7 @@ export default function ProfilePage() {
         <Card>
           <CardContent className="p-4 text-center">
             <div className="text-lg mb-2">📅</div>
-            <div className="text-xl font-bold text-blue-600">
+            <div className="text-xl font-bold text-primary">
               {myAppointments.filter(a => a.status === 'confirmed').length}
             </div>
             <div className="text-xs text-gray-600">Confirmados</div>
@@ -303,16 +304,15 @@ export default function ProfilePage() {
     <Card className="bg-white border-gray-200">
       <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <p className="text-xs uppercase tracking-wide text-blue-700 font-semibold">Área profissional</p>
-          <p className="text-sm text-blue-900 font-semibold">Solicitações recebidas de clientes</p>
+          <p className="text-xs uppercase tracking-wide text-primary font-semibold">Área profissional</p>
+          <p className="text-sm text-primary font-semibold">Solicitações recebidas de clientes</p>
           <p className="text-sm text-slate-700">Revise novos pedidos e acompanhe os agendamentos da sua agenda profissional.</p>
         </div>
-        <Link
-          href="/professional-appointments"
-          className="inline-flex items-center justify-center gap-2 !bg-blue-600 border border-blue-600 !text-white px-4 py-2 rounded-md font-medium hover:!bg-blue-700 hover:border-blue-700 transition-colors"
-        >
-          Ver solicitações recebidas
-        </Link>
+        <Button asChild>
+          <Link href="/professional-appointments">
+            Ver solicitações recebidas
+          </Link>
+        </Button>
       </CardContent>
     </Card>
   );
@@ -381,7 +381,7 @@ export default function ProfilePage() {
                             <span className="text-sm sm:text-base">{user.phone}</span>
                             <button
                               onClick={startEditPhone}
-                              className="text-gray-400 hover:text-blue-500 transition-colors"
+                              className="text-gray-400 hover:text-primary transition-colors"
                               title="Editar WhatsApp"
                             >
                               <Pencil className="w-3.5 h-3.5" />
@@ -406,17 +406,17 @@ export default function ProfilePage() {
                   <TabsList className="w-full sm:w-auto mb-3 grid grid-cols-2 h-auto p-1 bg-slate-100 rounded-lg">
                     <TabsTrigger
                       value="personal"
-                      className="h-10 font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:border-blue-600 focus-visible:ring-1 focus-visible:ring-blue-300 focus-visible:ring-offset-0"
+                      className="h-10 font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-0"
                     >
                       Cliente
                     </TabsTrigger>
                     <TabsTrigger
                       value="professional"
-                      className="h-10 font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:border-blue-600 focus-visible:ring-1 focus-visible:ring-blue-300 focus-visible:ring-offset-0 gap-2"
+                      className="h-10 font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-0 gap-2"
                     >
                       Atendimento
                       {professionalUnseenCount > 0 && (
-                        <span className="bg-blue-600 text-white text-[11px] font-bold min-w-5 h-5 px-1.5 inline-flex items-center justify-center rounded-full">
+                        <span className="bg-destructive text-destructive-foreground text-[11px] font-bold min-w-5 h-5 px-1.5 inline-flex items-center justify-center rounded-full">
                           {professionalUnseenCount > 9 ? "9+" : professionalUnseenCount}
                         </span>
                       )}

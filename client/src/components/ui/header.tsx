@@ -1,25 +1,149 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useSiteConfig } from "@/hooks/use-site-config";
 import { Avatar } from "@/components/ui/avatar";
+import { Switch } from "@/components/ui/switch";
 import AdminMenu from "./admin-menu";
 import { AlertTriangle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
+const SOUND_ALERT_STORAGE_KEY = "professional_sound_alert_enabled";
+
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [soundAlertEnabled, setSoundAlertEnabled] = useState(() => {
+    if (typeof window === "undefined") return true;
+    const saved = window.localStorage.getItem(SOUND_ALERT_STORAGE_KEY);
+    return saved === null ? true : saved === "true";
+  });
+  const previousUnseenCountRef = useRef<number | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const audioUnlockedRef = useRef(false);
   const { user, logoutMutation } = useAuth();
   const { data: siteConfig } = useSiteConfig();
   const [location] = useLocation();
+  const currentUserId = user?.id ?? null;
 
   const { data: unseenData } = useQuery<{ count: number; isProfessional?: boolean }>({
-    queryKey: ["/api/professional/unseen-count"],
-    enabled: !!user,
+    queryKey: ["/api/professional/unseen-count", currentUserId],
+    enabled: !!currentUserId,
     refetchInterval: 30000,
   });
   const unseenCount = unseenData?.count ?? 0;
   const isProfessional = unseenData?.isProfessional === true;
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(SOUND_ALERT_STORAGE_KEY, String(soundAlertEnabled));
+  }, [soundAlertEnabled]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+
+    const getAudioContext = () => {
+      if (!audioContextRef.current) {
+        audioContextRef.current = new AudioContextClass();
+      }
+      return audioContextRef.current;
+    };
+
+    const unlockAudio = async () => {
+      try {
+        const ctx = getAudioContext();
+        if (ctx.state === "suspended") {
+          await ctx.resume();
+        }
+        audioUnlockedRef.current = ctx.state === "running";
+      } catch {
+        audioUnlockedRef.current = false;
+      }
+    };
+
+    const onFirstInteraction = () => {
+      void unlockAudio();
+    };
+
+    window.addEventListener("pointerdown", onFirstInteraction, { passive: true });
+    window.addEventListener("keydown", onFirstInteraction);
+    window.addEventListener("touchstart", onFirstInteraction, { passive: true });
+
+    return () => {
+      window.removeEventListener("pointerdown", onFirstInteraction);
+      window.removeEventListener("keydown", onFirstInteraction);
+      window.removeEventListener("touchstart", onFirstInteraction);
+    };
+  }, []);
+
+  const playNotificationTone = async () => {
+    if (typeof window === "undefined") return;
+
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+
+    try {
+      if (!audioContextRef.current) {
+        audioContextRef.current = new AudioContextClass();
+      }
+
+      const ctx = audioContextRef.current;
+      if (ctx.state !== "running") {
+        await ctx.resume();
+      }
+      if (ctx.state !== "running") return;
+
+      const now = ctx.currentTime;
+      const masterGain = ctx.createGain();
+      masterGain.gain.setValueAtTime(0.0001, now);
+      masterGain.gain.exponentialRampToValueAtTime(0.12, now + 0.015);
+      masterGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.38);
+      masterGain.connect(ctx.destination);
+
+      const firstTone = ctx.createOscillator();
+      firstTone.type = "triangle";
+      firstTone.frequency.setValueAtTime(880, now);
+      firstTone.connect(masterGain);
+      firstTone.start(now);
+      firstTone.stop(now + 0.16);
+
+      const secondTone = ctx.createOscillator();
+      secondTone.type = "triangle";
+      secondTone.frequency.setValueAtTime(1175, now + 0.18);
+      secondTone.connect(masterGain);
+      secondTone.start(now + 0.18);
+      secondTone.stop(now + 0.36);
+
+      audioUnlockedRef.current = true;
+    } catch {
+      audioUnlockedRef.current = false;
+    }
+  };
+
+  useEffect(() => {
+    previousUnseenCountRef.current = null;
+  }, [currentUserId]);
+
+  useEffect(() => {
+    if (!isProfessional) {
+      previousUnseenCountRef.current = null;
+      return;
+    }
+
+    const previousCount = previousUnseenCountRef.current;
+    if (previousCount === null) {
+      previousUnseenCountRef.current = unseenCount;
+      return;
+    }
+
+    if (soundAlertEnabled && unseenCount > previousCount) {
+      void playNotificationTone();
+    }
+
+    previousUnseenCountRef.current = unseenCount;
+  }, [isProfessional, soundAlertEnabled, unseenCount]);
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
@@ -86,6 +210,16 @@ export default function Header() {
                   </span>
                 )}
               </Link>
+              {isProfessional && (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-full border border-gray-200 bg-white">
+                  <span className="text-xs text-gray-600 font-medium">Som alerta</span>
+                  <Switch
+                    checked={soundAlertEnabled}
+                    onCheckedChange={setSoundAlertEnabled}
+                    aria-label="Ativar alerta sonoro de novos agendamentos"
+                  />
+                </div>
+              )}
               {user.isAdmin && <AdminMenu />}
               <button 
                 onClick={() => logoutMutation.mutate()}
@@ -142,6 +276,16 @@ export default function Header() {
               {user.isAdmin && (
                 <div className="py-2">
                   <AdminMenu />
+                </div>
+              )}
+              {isProfessional && (
+                <div className="flex items-center justify-between px-1 py-2">
+                  <span className="text-sm text-gray-700 font-medium">Som alerta</span>
+                  <Switch
+                    checked={soundAlertEnabled}
+                    onCheckedChange={setSoundAlertEnabled}
+                    aria-label="Ativar alerta sonoro de novos agendamentos"
+                  />
                 </div>
               )}
               <button 
