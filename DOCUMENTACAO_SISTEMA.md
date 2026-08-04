@@ -101,7 +101,7 @@ Resumo das entidades em shared/schema.ts:
 - id, username, password
 - name, phone, email
 - isAdmin, isMaster
-- profileImageBase64, profileImageMimeType
+- profileImageUrl publica da foto de perfil (no codigo atual, armazenada por legado no campo profileImageBase64), profileImageMimeType
 - createdAt
 
 ### Categorias (categories)
@@ -495,6 +495,11 @@ Fluxo padrao:
 3. Arquivo vai para Supabase Storage.
 4. URL publica e gravada no banco.
 5. Rotas /api/images/* retornam redirect para URL publica ou payload da imagem salvo no banco.
+
+Observacao:
+
+- Para foto de perfil de usuario, o comportamento atual do sistema e subir o arquivo para o Supabase Storage e persistir a URL publica no PostgreSQL.
+- O nome profileImageBase64 ainda existe no codigo e no schema por compatibilidade legada, embora hoje esse campo seja usado para armazenar a URL publica da imagem.
 
 Tipos cobertos:
 
