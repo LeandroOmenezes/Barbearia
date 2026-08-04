@@ -1,580 +1,583 @@
-# Documentação do Sistema Barbearia
+# Documentacao do Sistema Barbearia
 
-## Índice
+## Indice
 
-- [1. Visão geral](#1-visão-geral)
-- [2. Arquitetura técnica](#2-arquitetura-técnica)
-  - [Frontend](#frontend)
-  - [Backend](#backend)
-  - [Estrutura principal de pastas](#estrutura-principal-de-pastas)
-  - [Fluxo de execução](#fluxo-de-execução)
-- [3. Modelos de dados principais](#3-modelos-de-dados-principais)
-- [4. Funcionalidades do sistema](#4-funcionalidades-do-sistema)
-  - [4.1 Autenticação e conta](#41-autenticação-e-conta)
-  - [4.2 Homepage pública](#42-homepage-pública)
-  - [4.3 Agendamento](#43-agendamento)
-  - [4.4 Gestão de clientes](#44-gestão-de-clientes)
-  - [4.5 Gestão de categorias e serviços](#45-gestão-de-categorias-e-serviços)
-  - [4.6 Gestão de preços](#46-gestão-de-preços)
-  - [4.7 Gestão de profissionais](#47-gestão-de-profissionais)
-  - [4.8 Bloqueios de agenda](#48-bloqueios-de-agenda)
-  - [4.9 Vendas e financeiro](#49-vendas-e-financeiro)
-  - [4.10 Reviews e interação social](#410-reviews-e-interação-social)
-  - [4.11 Configuração do site](#411-configuração-do-site)
-- [5. Perfis de acesso](#5-perfis-de-acesso)
-- [6. Rotas principais da API](#6-rotas-principais-da-api)
-- [7. Fluxos de uso mais comuns](#7-fluxos-de-uso-mais-comuns)
-- [8. Imagens e uploads](#8-imagens-e-uploads)
-- [9. Configuração e execução](#9-configuração-e-execução)
-- [10. Pontos importantes de manutenção](#10-pontos-importantes-de-manutenção)
-- [11. Histórico de atualizações](#11-histórico-de-atualizações)
-- [12. Configuração e Deployment](#12-configuração-e-deployment)
-- [13. Troubleshooting](#13-troubleshooting)
+- [1. Visao geral](#1-visao-geral)
+- [2. Arquitetura tecnica](#2-arquitetura-tecnica)
+- [3. Estrutura do projeto](#3-estrutura-do-projeto)
+- [4. Modelos de dados principais](#4-modelos-de-dados-principais)
+- [5. Funcionalidades do sistema](#5-funcionalidades-do-sistema)
+- [6. Perfis de acesso e permissoes](#6-perfis-de-acesso-e-permissoes)
+- [7. Rotas principais da API](#7-rotas-principais-da-api)
+- [8. Fluxos de uso mais comuns](#8-fluxos-de-uso-mais-comuns)
+- [9. Imagens e uploads](#9-imagens-e-uploads)
+- [10. Configuracao e execucao](#10-configuracao-e-execucao)
+- [11. Pontos importantes de manutencao](#11-pontos-importantes-de-manutencao)
+- [12. Troubleshooting rapido](#12-troubleshooting-rapido)
+- [13. Historico de atualizacoes](#13-historico-de-atualizacoes)
 
-## 1. Visão geral
+## 1. Visao geral
 
-O sistema Barbearia é uma aplicação full-stack para gestão de salões de beleza, com foco em:
+O sistema Barbearia e uma aplicacao full-stack para operacao de salao/barbearia, com:
 
-- agendamento de serviços
-- cadastro e gestão de clientes
-- gestão de categorias, serviços, preços e profissionais
-- painel administrativo para controle operacional
-- vendas, relatórios e histórico financeiro
-- avaliações, comentários e interações públicas
-- personalização do site (banner, footer, tema, configuração geral)
+- site publico para captacao e agendamento
+- painel administrativo para operacao diaria
+- controle de usuarios com niveis Cliente, Profissional, Admin e Master
+- modulo financeiro (vendas, historico e relatorio)
+- personalizacao visual e conteudo institucional
 
-A aplicação possui uma interface pública para clientes e um painel administrativo para usuários com perfil Admin ou Master.
+A aplicacao roda em Node.js (backend Express) e React (frontend), com PostgreSQL via Drizzle e armazenamento de imagens no Supabase Storage.
 
 ---
 
-## 2. Arquitetura técnica
+## 2. Arquitetura tecnica
 
 ### Frontend
+
 - React 18 + TypeScript
 - Vite
-- Tailwind CSS
-- Radix UI
+- Tailwind CSS + componentes UI
 - Wouter para roteamento
-- React Query para cache e sincronização de dados
-- React Hook Form + Zod para validação de formulários
+- React Query para cache/invalidation
+- React Hook Form + Zod para formularios
 
 ### Backend
+
 - Node.js + TypeScript
-- Express.js
-- Passport.js para autenticação local e Google OAuth
-- express-session + connect-pg-simple para sessões persistidas no PostgreSQL
+- Express
+- Passport (Local + Google OAuth)
+- Sessao com express-session + connect-pg-simple
 - Drizzle ORM + PostgreSQL
-- Multer para upload de arquivos
-- Supabase para armazenamento de arquivos/imagens
-- Nodemailer para recuperação de senha e comunicações
+- Multer para upload
+- Supabase Storage para arquivos
 
-### Estrutura principal de pastas
-- client/ — frontend React
-- server/ — backend Express e rotas
-- shared/ — schema e tipos compartilhados
-- scripts/ — utilidades auxiliares (geração de documentos, screenshots, contratos, etc.)
+### Ponto de entrada e porta
 
-### Fluxo de execução
-- O frontend é servido pelo Vite em desenvolvimento.
-- O backend expõe uma API REST e também serve a aplicação em produção.
-- A porta padrão da aplicação é 5000.
+- Porta padrao: 5000
+- Backend exposto via rotas /api
+
+### Diagrama de arquitetura
+
+```mermaid
+flowchart LR
+	U[Cliente/Administrador] --> FE[Frontend React + Vite]
+	FE -->|HTTP /api| BE[Backend Express]
+	FE -->|SSE /api/appointments/stream| BE
+
+	BE --> AUTH[Passport Local + Google OAuth]
+	BE --> DB[(PostgreSQL + Drizzle)]
+	BE --> SESS[(Tabela session)]
+	BE --> SUPA[(Supabase Storage)]
+
+	DB --> DATA[Usuarios, Agendamentos, Vendas, Reviews, Site Config]
+	SUPA --> IMG[Imagens de perfil, servicos, banner, logo]
+```
 
 ---
 
-## 3. Modelos de dados principais
+## 3. Estrutura do projeto
 
-### Usuários
-Representam clientes, administradores e profissionais vinculados ao sistema.
+- client/: aplicacao React
+- server/: API Express, autenticacao e integracoes
+- shared/: schema e tipos compartilhados
+- scripts/: utilitarios de documentacao e automacoes
+- generated/: artefatos gerados
 
-Campos principais:
-- id
-- username
-- password
-- name
-- phone
-- email
-- isAdmin
-- isMaster
-- profileImageBase64
-- profileImageMimeType
+Arquivos-chave:
+
+- server/routes.ts: rotas de negocio
+- server/auth.ts: login/sessao/OAuth
+- shared/schema.ts: modelo de dados e validacoes
+- client/src/pages/dashboard-page.tsx: composicao do painel admin
+
+---
+
+## 4. Modelos de dados principais
+
+Resumo das entidades em shared/schema.ts:
+
+### Usuarios (users)
+
+- id, username, password
+- name, phone, email
+- isAdmin, isMaster
+- profileImageBase64, profileImageMimeType
 - createdAt
 
-### Categorias
-- id
-- name
-- icon
+### Categorias (categories)
 
-### Serviços
-- id
-- name
-- description
-- minPrice
-- maxPrice
-- categoryId
-- icon
-- imageUrl
-- imageDataBase64
-- imageMimeType
+- id, name, icon
+
+### Servicos (services)
+
+- id, name, description
+- minPrice, maxPrice
+- categoryId, icon
+- imageUrl, imageDataBase64, imageMimeType
 - featured
 
-### Preços
-- id
-- name
-- minPrice
-- maxPrice
-- categoryId
+### Precos (price_items)
 
-### Agendamentos
-- id
-- name
-- email
-- phone
-- serviceId
-- categoryId
-- professionalId
-- date
-- time
-- notes
-- status
+- id, name, minPrice, maxPrice, categoryId
+
+### Agendamentos (appointments)
+
+- id, name, email, phone
+- serviceId, categoryId, professionalId
+- date, time, notes
+- status (default pending)
 - seenByProfessional
 - createdAt
 
-### Profissionais
-- id
-- name
-- categoryId
-- bio
-- photoBase64
-- photoMimeType
+### Profissionais (professionals)
+
+- id, name, categoryId, bio
+- photoBase64, photoMimeType
 - active
 - appointmentInterval
-- userId
-- lunchBreakStart
-- lunchBreakEnd
+- userId (vinculo opcional com usuario)
+- lunchBreakStart, lunchBreakEnd
 - createdAt
 
-### Bloqueios de agenda
-- id
-- professionalId
-- startDate
-- endDate
-- startTime
-- endTime
-- reason
-- description
+### Bloqueios de agenda (schedule_blocks)
+
+- id, professionalId (opcional)
+- startDate, endDate
+- startTime, endTime (opcionais)
+- reason, description
 - createdAt
 
-### Avaliações e comentários
+### Reviews e interacoes
+
 - reviews
 - review_comments
-- comment_likes
 - review_likes
+- comment_likes
 
-### Configurações do site
+### Vendas (sales)
+
+- id, clientName
+- serviceId, serviceName
+- categoryId, categoryName
+- professionalId, professionalName
+- amount, date, paymentMethod
+- notes
+- status (active/cancelled)
+- cancelledReason
+- createdAt
+
+### Configuracao de site
+
 - banner
 - footer
 - site_config
-- vendas e relatórios
+
+### Recuperacao de senha
+
+- password_reset_tokens
 
 ---
 
-## 4. Funcionalidades do sistema
+## 5. Funcionalidades do sistema
 
-### 4.1 Autenticação e conta
-O sistema suporta:
-- cadastro de usuário
-- login com email/senha
-- logout
-- recuperação de senha
-- autenticação com Google OAuth
-- atualização de telefone e imagem de perfil
-- verificação de sessão autenticada
+### 5.1 Autenticacao e conta
 
-Fluxo importante:
-- O backend usa sessions persistidas com express-session e connect-pg-simple no PostgreSQL.
-- O acesso a rotas protegidas é controlado por middleware e componentes frontend.
-- As sessões são armazenadas na tabela `session` para suportar reinícios do servidor e ambientes de produção mais confiáveis.
+- Cadastro de usuario
+- Login local (email/senha)
+- Login social Google (quando credenciais configuradas)
+- Logout
+- Sessao persistida no PostgreSQL
+- Recuperacao de senha por token
+- Atualizacao de telefone e foto de perfil
 
-### 4.2 Homepage pública
-A homepage exibe:
-- banner configurável
-- categorias e serviços
-- lista de profissionais
-- avaliações públicas
-- informações do salão
-- seção de agendamento
+### 5.2 Home publica
 
-### 4.3 Agendamento
-O fluxo de agendamento inclui:
-- escolha de categoria e serviço
-- seleção de profissional (quando aplicável)
-- escolha de data e horário disponível
-- validação de data e horário
-- bloqueios de agenda e horários já ocupados
-- confirmação do agendamento
-- atualização de status posterior
+- Banner configuravel
+- Catalogo de servicos e categorias
+- Profissionais ativos
+- Secao de precos
+- Reviews publicas
+- CTA para agendamento
 
-Regras de negócio relevantes:
-- datas anteriores à data de negócio são bloqueadas
-- horários já passados não podem ser selecionados
-- horários ocupados ou bloqueados são mostrados como indisponíveis
-- o sistema usa fuso horário de Brasília para comparações de data/hora
+### 5.3 Agendamentos
 
-### 4.4 Gestão de clientes
-O painel administrativo permite:
-- listar clientes
-- criar clientes
-- editar clientes
-- excluir clientes
+- Busca de horarios disponiveis por data e opcionalmente por profissional
+- Validacao de horario passado usando horario de Brasilia
+- Bloqueio por data inteira ou faixa de horario
+- Considera intervalo de atendimento e horario de almoco do profissional
+- Eventos SSE para atualizar disponibilidade em tempo real
 
-### 4.5 Gestão de categorias e serviços
-Permite:
-- criar, editar e excluir categorias
-- criar, editar e excluir serviços
-- marcar serviços como destaque
-- associar serviços a categorias
-- fazer upload de imagem do serviço
+### 5.4 Painel administrativo
 
-### 4.6 Gestão de preços
-Permite:
-- listar itens de preço por categoria
-- criar, editar e excluir itens de preço
-- visualizar faixas de preço mínimo/máximo
+Abas principais no dashboard:
 
-### 4.7 Gestão de profissionais
-Permite:
-- listar profissionais
-- filtrar profissionais por categoria
-- ativar/desativar profissionais
-- editar dados do profissional
-- fazer upload de foto do profissional
-- definir intervalo de atendimento
-- definir intervalo de almoço
-- visualizar agenda e atendimentos do profissional
-- acessar painel próprio com marcação de atendimentos vistos e contagem de não vistos
+- Agendamentos
+- Profissionais
+- Bloqueios de agenda
+- Gestao de vendas
+- Relatorio financeiro
+- Clientes
+- Usuarios do sistema
 
-### 4.8 Bloqueios de agenda
-O sistema permite bloquear datas/horários de atendimento para:
-- feriados
-- folgas
-- pausas de almoço
-- indisponibilidade pontual
+Observacao atual de UX na tela de usuarios:
 
-### 4.9 Vendas e financeiro
-O sistema registra vendas e permite:
-- cadastrar vendas
-- listar histórico
-- filtrar por período
-- cancelar vendas
-- gerar visão financeira básica
+- Lista ordenada por hierarquia visual: Master, Admin, Profissional, Cliente
+- Dentro de cada nivel, ordenacao por data de criacao mais antiga primeiro
 
-Fluxo de vendas:
-- o usuário registra uma venda vinculada a um cliente e produtos/serviços
-- o sistema salva o histórico e permite consultar ou cancelar a venda
-- relatórios financeiros são gerados a partir do histórico de vendas e filtrações
+### 5.5 Clientes
 
-### 4.10 Reviews e interação social
-O sistema suporta:
-- cadastro de avaliações públicas
-- comentários em avaliações
-- curtidas em reviews e comentários
-- visualização de curtidas do usuário
+- Listar
+- Criar
+- Editar
+- Remover
 
-### 4.11 Configuração do site
-O painel administrativo permite:
-- editar banner
-- editar footer
-- ajustar nome do site e slogan
-- alterar cor principal do tema
-- enviar logo
-- enviar imagem de fundo para a seção de agendamento
-- configurar chave PIX e dados do beneficiário
+### 5.6 Servicos, categorias e precos
+
+- CRUD de servicos
+- CRUD de categorias
+- CRUD de tabela de precos
+- Marcar servico como destaque
+- Upload de imagem de servico
+
+### 5.7 Profissionais
+
+- CRUD de profissionais
+- Ativar/desativar
+- Upload de foto
+- Vinculo opcional com usuario do sistema
+- Portal do profissional para acompanhar agenda e marcar itens vistos
+
+### 5.8 Vendas e financeiro
+
+- Registrar venda
+- Editar venda
+- Cancelar venda com motivo
+- Historico com filtros
+- Relatorio financeiro consolidado no frontend
+- Fluxo PIX com payload/QR no cadastro de venda
+
+### 5.9 Reviews e comentarios
+
+- Criar review autenticado
+- Curtidas por tipo (heart/thumbs)
+- Comentarios em reviews
+- Curtidas em comentarios
+- Consulta de likes do usuario logado
+
+### 5.10 Configuracao de site
+
+- Banner
+- Rodape
+- Nome/slogan/cor primaria
+- Logo
+- Fundo da secao de agendamento
+- Chave PIX e dados do beneficiario
 
 ---
 
-## 5. Perfis de acesso
+## 6. Perfis de acesso e permissoes
 
 ### Cliente
-- acessa a homepage pública
-- agenda serviços
-- visualiza seus agendamentos
-- envia avaliações
-- acessa perfil pessoal
+
+- Usa site publico
+- Cria agendamentos
+- Consulta os proprios agendamentos
+- Envia reviews
 
 ### Profissional
-- visualiza seus agendamentos
-- marca atendimentos como vistos
-- acessa painel próprio com agenda
+
+- Pode ter usuario vinculado
+- Consulta agenda propria
+- Marca agendamentos como vistos
 
 ### Admin
-- acessa dashboard administrativo
-- gerencia clientes, serviços, categorias, preços, profissionais e vendas
-- gerencia avaliações, comentários e configuração do site
+
+- Acesso ao dashboard
+- Gerencia agendamentos, clientes, profissionais, bloqueios e vendas
+- Pode acessar lista de usuarios do sistema
 
 ### Master
-- possui todas as permissões do Admin
-- cria e remove usuários Admin
-- controla permissões Master
+
+- Todas as permissoes de Admin
+- Acoes exclusivas de configuracao estrutural:
+- servicos, categorias, precos
+- banner, rodape e site-config
+- alteracao de status Master de usuarios
+- remocao de arquivo no storage
+
+Regras especiais implementadas:
+
+- Nao pode excluir a propria conta
+- Usuario Master nao pode ser excluido sem antes perder status Master
+- Um Master mais novo nao pode remover status Master de um usuario Master mais antigo
 
 ---
 
-## 6. Rotas principais da API
+## 7. Rotas principais da API
 
-### Autenticação
-- POST /api/register
-- POST /api/login
-- GET /api/auth/google
-- GET /api/auth/google/callback
-- POST /api/logout
-- GET /api/user
-- GET /api/auth/google
-- GET /api/auth/google/callback
-- POST /api/forgot-password
-- GET /api/reset-password/:token
-- POST /api/reset-password/:token
+Convencoes:
 
-### Clientes
-- GET /api/clients
-- GET /api/clients/:id
-- POST /api/clients
-- PATCH /api/clients/:id
-- DELETE /api/clients/:id
+- Publica: sem login
+- Autenticada: exige sessao
+- Admin: exige user.isAdmin
+- Master: exige user.isMaster
 
-### Categorias e serviços
+### 7.1 Autenticacao e sessao
+
+- POST /api/register (publica)
+- POST /api/login (publica)
+- POST /api/logout (autenticada)
+- GET /api/user (autenticada)
+- GET /api/auth/google (publica, habilitada com credenciais Google)
+- GET /api/auth/google/callback (publica, habilitada com credenciais Google)
+- GET /api/auth/google/debug (diagnostico)
+
+### 7.2 Recuperacao de senha
+
+- POST /api/forgot-password (publica)
+- GET /api/reset-password/:token (publica)
+- POST /api/reset-password/:token (publica)
+
+### 7.3 Clientes
+
+- GET /api/clients (autenticada)
+- GET /api/clients/:id (autenticada)
+- POST /api/clients (autenticada)
+- PATCH /api/clients/:id (autenticada)
+- DELETE /api/clients/:id (autenticada)
+
+### 7.4 Categorias, servicos e precos
+
+Leitura publica:
+
 - GET /api/categories
 - GET /api/services/all
 - GET /api/services/featured
 - GET /api/services/:categoryId
-- POST /api/services/:id/upload-image
-- POST /api/admin/services
-- PUT /api/admin/services/:id
-- PATCH /api/admin/services/:id/featured
-- DELETE /api/admin/services/:id
-- POST /api/admin/categories
-- PUT /api/admin/categories/:id
-- DELETE /api/admin/categories/:id
-
-### Preços
 - GET /api/prices
 - GET /api/prices/:categoryId
-- POST /api/admin/prices
-- PUT /api/admin/prices/:id
-- DELETE /api/admin/prices/:id
 
-### Vendas
-- POST /api/sales
-- GET /api/sales
-- PATCH /api/sales/:id
-- PATCH /api/sales/:id/cancel
-- GET /api/sales/filter
+Gestao Master:
 
-### Agendamentos
-- GET /api/appointments/available-times/:date
-- POST /api/appointments
-- GET /api/appointments
-- GET /api/my-appointments
-- PATCH /api/appointments/:id/status
-- GET /api/appointments/stream
+- POST /api/services/:id/upload-image (master)
+- POST /api/admin/services (master)
+- PUT /api/admin/services/:id (master)
+- PATCH /api/admin/services/:id/featured (master)
+- DELETE /api/admin/services/:id (master)
+- POST /api/admin/categories (master)
+- PUT /api/admin/categories/:id (master)
+- DELETE /api/admin/categories/:id (master)
+- POST /api/admin/prices (master)
+- PUT /api/admin/prices/:id (master)
+- DELETE /api/admin/prices/:id (master)
 
-### Profissionais
-- GET /api/professionals
-- GET /api/professionals/category/:categoryId
-- POST /api/admin/professionals
-- PUT /api/admin/professionals/:id
-- PATCH /api/admin/professionals/:id/active
-- DELETE /api/admin/professionals/:id
-- POST /api/professionals/:id/upload-photo
-- GET /api/professional/me
-- GET /api/professional/unseen-count
-- GET /api/professional/appointments
-- POST /api/professional/appointments/mark-seen
+### 7.5 Agendamentos
 
-### Reviews e comentários
-- GET /api/reviews
-- POST /api/reviews
-- POST /api/reviews/:id/like/:likeType
-- GET /api/user/likes
-- GET /api/reviews/:reviewId/comments
-- POST /api/reviews/:reviewId/comments
-- POST /api/comments/:commentId/like/:likeType
-- GET /api/user/comment-likes
+- GET /api/appointments/available-times/:date (publica)
+- POST /api/appointments (autenticada)
+- GET /api/appointments (admin)
+- GET /api/my-appointments (autenticada)
+- PATCH /api/appointments/:id/status (autenticada)
+- PATCH /api/appointments/:id/mark-seen (autenticada)
+- GET /api/appointments/stream (SSE)
 
-### Administração e configurações
-- GET /api/admin/users
-- POST /api/admin/users
-- PATCH /api/admin/users/:id/master
-- DELETE /api/admin/users/:id
-- GET /api/banner
-- PUT /api/banner
-- POST /api/banner/upload-image
-- GET /api/footer
-- PUT /api/footer
-- GET /api/site-config
-- PUT /api/site-config
-- POST /api/site-config/upload-logo
-- POST /api/site-config/upload-appointment-background
-- GET /api/schedule-blocks
-- POST /api/schedule-blocks
-- DELETE /api/schedule-blocks/:id
-- PATCH /api/user/phone
-- POST /api/user/upload-profile-image
-- DELETE /api/user/profile-image
-- GET /api/images/user/:id
-- GET /api/images/service/:id
-- GET /api/images/banner
-- POST /api/storage/delete
-- POST /api/admin/regenerate-images
+Rota interna de teste:
+
+- POST /api/_test/create-appointment
+
+### 7.6 Reviews e comentarios
+
+- GET /api/reviews (publica)
+- POST /api/reviews (autenticada)
+- POST /api/reviews/:id/like/:likeType (autenticada)
+- GET /api/user/likes (autenticada)
+- GET /api/reviews/:reviewId/comments (publica)
+- POST /api/reviews/:reviewId/comments (autenticada)
+- POST /api/comments/:commentId/like/:likeType (autenticada)
+- GET /api/user/comment-likes (autenticada)
+
+### 7.7 Usuarios administrativos
+
+- GET /api/admin/users (admin ou master)
+- POST /api/admin/users (admin ou master)
+- PATCH /api/admin/users/:id/master (master)
+- DELETE /api/admin/users/:id (admin ou master)
+
+### 7.8 Vendas
+
+- POST /api/sales (autenticada)
+- GET /api/sales (autenticada)
+- PATCH /api/sales/:id (autenticada)
+- PATCH /api/sales/:id/cancel (autenticada)
+- GET /api/sales/filter (autenticada)
+
+### 7.9 Profissionais e portal profissional
+
+- GET /api/professionals (publica)
+- GET /api/professionals/category/:categoryId (publica)
+- POST /api/admin/professionals (admin)
+- PUT /api/admin/professionals/:id (admin)
+- PATCH /api/admin/professionals/:id/active (admin)
+- DELETE /api/admin/professionals/:id (admin)
+- POST /api/professionals/:id/upload-photo (admin)
+- GET /api/professional/me (autenticada)
+- GET /api/professional/unseen-count (autenticada)
+- GET /api/professional/appointments (autenticada)
+- POST /api/professional/appointments/mark-seen (autenticada)
+- PATCH /api/professional/appointments/:id/mark-seen (autenticada)
+
+### 7.10 Configuracao de conteudo e midia
+
+- GET /api/banner (publica)
+- PUT /api/banner (master)
+- POST /api/banner/upload-image (master)
+- GET /api/footer (publica)
+- PUT /api/footer (master)
+- GET /api/site-config (publica)
+- PUT /api/site-config (master)
+- POST /api/site-config/upload-logo (master)
+- POST /api/site-config/upload-appointment-background (master)
+
+### 7.11 Bloqueios, perfil e imagens
+
+- GET /api/schedule-blocks (publica)
+- POST /api/schedule-blocks (admin)
+- DELETE /api/schedule-blocks/:id (admin)
+- PATCH /api/user/phone (autenticada)
+- POST /api/user/upload-profile-image (autenticada)
+- DELETE /api/user/profile-image (autenticada)
+- GET /api/images/user/:id (publica)
+- GET /api/images/service/:id (publica)
+- GET /api/images/banner (publica)
+- POST /api/storage/delete (master)
+- POST /api/admin/regenerate-images (admin, funcionalidade desabilitada por seguranca)
+- GET /api/user/test-auth (diagnostico)
 
 ---
 
-## 7. Fluxos de uso mais comuns
+## 8. Fluxos de uso mais comuns
 
 ### Cadastro e login
-1. O usuário acessa /auth.
-2. Pode registrar uma conta ou entrar com Google.
-3. O backend cria ou valida a sessão do usuário.
+
+1. Usuario cria conta em /auth ou faz login local/social.
+2. Backend valida credenciais e abre sessao.
+3. Frontend consulta /api/user para estado autenticado.
 
 ### Agendamento
-1. O cliente escolhe uma categoria e um serviço.
-2. Seleciona um profissional, se houver.
-3. Escolhe uma data e um horário.
-4. O backend valida se a data/horário é válido e se o slot está disponível.
-5. O agendamento é salvo com status inicial `pending`.
 
-### Administração
-1. O usuário entra com perfil Admin/Master.
-2. Acesso ao dashboard e aos módulos de gestão.
-3. O painel consome a API e atualiza o estado do sistema em tempo real (quando aplicável).
+1. Cliente escolhe servico e, opcionalmente, profissional.
+2. Frontend consulta /api/appointments/available-times/:date.
+3. Backend aplica regras de bloqueio, ocupacao, horario passado e almoco.
+4. Cliente confirma com POST /api/appointments.
+5. SSE notifica clientes para refresh de disponibilidade.
+
+### Operacao administrativa
+
+1. Admin/Master acessa dashboard.
+2. Acoes de CRUD sao feitas por modulo e invalidadas via React Query.
+3. Modulo de usuarios exibe hierarquia e permite manutencao de niveis conforme regra de permissao.
+
+### Recuperacao de senha
+
+1. Usuario informa email em /forgot-password.
+2. Sistema gera token temporario.
+3. Usuario redefine senha em /reset-password/:token.
+4. Token e invalidado apos uso.
 
 ---
 
-## 8. Imagens e uploads
+## 9. Imagens e uploads
 
-O sistema usa upload para:
-- foto de perfil do usuário
+Fluxo padrao:
+
+1. Frontend envia multipart/form-data.
+2. Multer valida tipo/tamanho (jpeg, jpg, png, webp; limite 5 MB).
+3. Arquivo vai para Supabase Storage.
+4. URL publica e gravada no banco.
+5. Rotas /api/images/* retornam redirect para URL publica ou payload da imagem salvo no banco.
+
+Tipos cobertos:
+
+- foto de perfil de usuario
 - foto de profissional
-- imagem de serviço
+- imagem de servico
 - banner
-- logo do site
-- imagem de fundo da seção de agendamento
-
-Processo:
-1. O frontend envia o arquivo.
-2. O backend usa Multer para processar o arquivo.
-3. O arquivo é enviado ao Supabase.
-4. A URL pública é salva no banco.
-5. O frontend usa as URLs salvas para exibir as imagens.
+- logo
+- fundo da secao de agendamento
 
 ---
 
-## 9. Configuração e execução
+## 10. Configuracao e execucao
 
-### Variáveis de ambiente
+### Variaveis de ambiente
+
 ```env
 DATABASE_URL=postgresql://user:password@host:port/database
-SESSION_SECRET=sua_chave_secreta_aqui
+SESSION_SECRET=sua_chave_secreta
 GOOGLE_CLIENT_ID=seu_google_client_id
 GOOGLE_CLIENT_SECRET=seu_google_client_secret
-EMAIL_USER=seu_email@gmail.com
-EMAIL_PASS=sua_senha_de_aplicativo
-SUPABASE_URL=https://...supabase.co
+APP_URL=https://seu-dominio.com
+RENDER_EXTERNAL_URL=https://seu-app.onrender.com
+SUPABASE_URL=https://xxxx.supabase.co
 SUPABASE_SERVICE_KEY=seu_service_role_key
 SUPABASE_BUCKET=public
 ```
 
-### Comandos
+### Comandos principais
+
 - npm install
 - npm run dev
 - npm run build
 - npm run start
 - npm run db:push
 
-### Observações de ambiente
-- A aplicação usa a porta 5000.
-- O backend precisa de PostgreSQL disponível e configurado.
-- As sessões agora são persistidas no PostgreSQL por meio da tabela `session`.
-- Em produção, é necessário garantir os arquivos estáticos e o serviço node.
+### Observacoes
+
+- Sessao persistida em tabela session no PostgreSQL.
+- Login Google depende de variaveis GOOGLE_* configuradas.
+- Se APP_URL/RENDER_EXTERNAL_URL estiverem incorretas, callback do Google falha.
 
 ---
 
-## 10. Pontos importantes de manutenção
+## 11. Pontos importantes de manutencao
 
-- O sistema depende de regras de calendário/horário em Brasília.
-- O fluxo de agendamento é sensível a datas, horários e bloqueios de agenda.
-- As imagens são armazenadas externamente no Supabase.
-- O frontend usa React Query, então mudanças no backend podem exigir invalidation de queries.
-- O sistema possui permissões separadas para Admin, Master, profissional e cliente.
-
----
-
-## 11. Histórico de atualizações
-
-- 2026-07-04 — documentação revisada para refletir o estado real do sistema, incluindo fluxo de agendamento, configurações, avaliações, vendas, rotas administrativas e gestão de imagens.
-- 2026-07-04 — documentadas rotas de profissionais, bloqueios de agenda, uploads e personalização do site.
-- 2026-06-24 — documentação atualizada com rotas reais e fluxo de upload no bucket Supabase.
-- 2026-06-24 — scripts legados de migração e limpeza removidos do código principal.
-- 2026-06-24 — documentados perfis Master, Admin, Profissional e Cliente.
+- Regras de agenda dependem do horario de Brasilia no backend.
+- Rotas com permissao mista (Admin x Master) devem ser testadas com ambos perfis.
+- Uploads e exibicao de imagens suportam URL externa e fallback em base64.
+- Mudancas em endpoints exigem revisar query keys/invalidation no frontend.
+- Existem endpoints de diagnostico e teste; manter controle de exposicao em ambiente produtivo.
 
 ---
 
-## 12. Configuração e Deployment
+## 12. Troubleshooting rapido
 
-### Variáveis de ambiente principais
+### Login Google nao funciona
 
-```env
-DATABASE_URL=postgresql://user:password@host:port/database
-SESSION_SECRET=sua_chave_secreta_aqui
-GOOGLE_CLIENT_ID=seu_google_client_id
-GOOGLE_CLIENT_SECRET=seu_google_client_secret
-EMAIL_USER=seu_email@gmail.com
-EMAIL_PASS=sua_senha_de_aplicativo
-SUPABASE_URL=https://...supabase.co
-SUPABASE_SERVICE_KEY=seu_service_role_key
-SUPABASE_BUCKET=public
-```
+- conferir GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET
+- conferir callback URI no provedor
+- validar APP_URL/RENDER_EXTERNAL_URL
+- usar /api/auth/google/debug para diagnostico
 
-### Comandos úteis
+### Agendamento recusado indevidamente
 
-- `npm install`
-- `npm run dev`
-- `npm run build`
-- `npm run start`
-- `npm run db:push`
+- conferir data/hora no fuso de Brasilia
+- conferir bloqueios de agenda gerais e por profissional
+- conferir horario de almoco e intervalo do profissional
 
-### Deploy
+### Imagem nao aparece
 
-1. Configure variáveis de ambiente no servidor
-2. Configure PostgreSQL e Supabase corretamente
-3. Execute `npm install`
-4. Execute `npm run db:push` quando necessário
-5. Execute `npm run build` e `npm run start`
+- conferir se upload retornou URL
+- testar rota /api/images correspondente
+- validar permissoes de bucket no Supabase
+
+### Permissao divergente no painel
+
+- validar flags isAdmin e isMaster do usuario
+- conferir regra da rota especifica (algumas sao exclusivas de Master)
 
 ---
 
-## 13. Troubleshooting
+## 13. Historico de atualizacoes
 
-### Erro de autenticação Google
-
-- Verifique credenciais Google OAuth
-- Confira callback URI no Google Cloud
-- Garanta que a URL de aplicação esteja correta
-
-### Problemas de email
-
-- Confirme `EMAIL_USER` e `EMAIL_PASS`
-- Use senha de aplicativo do Gmail
-- Verifique o envio SMTP
-
-### Imagens não carregam
-
-- Verifique configuração do bucket Supabase
-- Refaça uploads no painel
-- Valide rotas de imagem do backend
-
-### Agendamentos com conflito
-
-- Confira horários disponíveis
-- Ajuste bloqueios de agenda
-- Verifique se o profissional está ativo
-
----
+- 2026-08-04: documentacao totalmente revisada com base no codigo atual (auth.ts, routes.ts, schema.ts e modulos do dashboard), incluindo permissoes por endpoint e regras de negocio de agendamento.
+- 2026-08-04: adicionada observacao da ordenacao hierarquica na tela de usuarios (Master > Admin > Profissional > Cliente).
