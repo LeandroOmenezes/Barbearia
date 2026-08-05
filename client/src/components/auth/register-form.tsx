@@ -81,6 +81,10 @@ export default function RegisterForm({ onToggleForm }: RegisterFormProps) {
               <FormControl>
                 <Input 
                   type="email" 
+                  autoComplete="username"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
                   placeholder="seu.email@exemplo.com" 
                   className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
                   {...field} 
@@ -100,6 +104,7 @@ export default function RegisterForm({ onToggleForm }: RegisterFormProps) {
               <FormControl>
                 <Input 
                   type="tel" 
+                  autoComplete="tel"
                   placeholder="(11) 99999-9999" 
                   className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
                   {...field}
@@ -123,6 +128,10 @@ export default function RegisterForm({ onToggleForm }: RegisterFormProps) {
                   <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                   <Input 
                     type={showPassword ? "text" : "password"} 
+                    autoComplete="new-password"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
                     placeholder="••••••••" 
                     className="w-full pl-9 pr-12 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
                     {...field} 
@@ -152,6 +161,10 @@ export default function RegisterForm({ onToggleForm }: RegisterFormProps) {
                   <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                   <Input 
                     type={showConfirmPassword ? "text" : "password"} 
+                    autoComplete="new-password"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
                     placeholder="••••••••" 
                     className="w-full pl-9 pr-12 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
                     {...field} 

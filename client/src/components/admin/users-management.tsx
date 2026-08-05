@@ -179,6 +179,10 @@ export default function UsersManagement() {
                 <Input
                   id="username"
                   type="email"
+                  autoComplete="username"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
                   value={newUser.username}
                   onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
                   placeholder="usuario@exemplo.com"
@@ -189,6 +193,10 @@ export default function UsersManagement() {
                 <Input
                   id="password"
                   type="password"
+                  autoComplete="new-password"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
                   value={newUser.password}
                   onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
                   placeholder="••••••••"

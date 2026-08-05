@@ -67,6 +67,10 @@ export default function LoginForm({ onToggleForm }: LoginFormProps) {
                 <FormControl>
                   <Input 
                     type="email" 
+                    autoComplete="username"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
                     placeholder="seu.email@exemplo.com" 
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
                     {...field} 
@@ -88,6 +92,10 @@ export default function LoginForm({ onToggleForm }: LoginFormProps) {
                     <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                     <Input 
                       type={showPassword ? "text" : "password"} 
+                      autoComplete="current-password"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
                       placeholder="••••••••" 
                       className="w-full pl-9 pr-12 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
                       {...field} 

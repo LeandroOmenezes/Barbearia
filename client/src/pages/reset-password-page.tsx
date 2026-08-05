@@ -143,6 +143,10 @@ export default function ResetPasswordPage() {
                           <div className="relative">
                             <Input 
                               type={showPassword ? "text" : "password"} 
+                              autoComplete="new-password"
+                              autoCapitalize="none"
+                              autoCorrect="off"
+                              spellCheck={false}
                               placeholder="••••••••" 
                               className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
                               {...field} 
@@ -171,6 +175,10 @@ export default function ResetPasswordPage() {
                           <div className="relative">
                             <Input 
                               type={showConfirmPassword ? "text" : "password"} 
+                              autoComplete="new-password"
+                              autoCapitalize="none"
+                              autoCorrect="off"
+                              spellCheck={false}
                               placeholder="••••••••" 
                               className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
                               {...field} 
