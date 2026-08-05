@@ -131,13 +131,54 @@ export default function AppointmentsManagement() {
     },
   });
 
+  const statusRank: Record<string, number> = {
+    pending: 0,
+    confirmed: 1,
+    completed: 2,
+    cancelled: 3,
+  };
+
+  const getAppointmentDateTime = (appointment: Appointment) => {
+    const datePart = String(appointment.date).slice(0, 10);
+    return new Date(`${datePart}T${appointment.time}:00`);
+  };
+
   const getFilteredAppointments = () => {
     if (!appointments) return [];
-    if (statusFilter === "all") return appointments;
-    return appointments.filter(appointment => appointment.status === statusFilter);
+    const baseAppointments =
+      statusFilter === "all"
+        ? appointments
+        : appointments.filter((appointment) => appointment.status === statusFilter);
+
+    const now = Date.now();
+
+    return [...baseAppointments].sort((a, b) => {
+      const rankA = statusRank[a.status ?? ""] ?? 99;
+      const rankB = statusRank[b.status ?? ""] ?? 99;
+      if (rankA !== rankB) return rankA - rankB;
+
+      const timeA = getAppointmentDateTime(a).getTime();
+      const timeB = getAppointmentDateTime(b).getTime();
+      const isPastA = timeA < now;
+      const isPastB = timeB < now;
+
+      if (isPastA !== isPastB) return isPastA ? 1 : -1;
+
+      // Future: closest first | Past: most recent first
+      if (!isPastA && !isPastB) return timeA - timeB;
+      return timeB - timeA;
+    });
   };
 
   const filteredAppointments = getFilteredAppointments();
+
+  const isUpcomingAppointment = (appointment: Appointment) => {
+    return getAppointmentDateTime(appointment).getTime() >= Date.now();
+  };
+
+  const nextPendingAppointmentId = filteredAppointments.find(
+    (appointment) => appointment.status === "pending" && isUpcomingAppointment(appointment),
+  )?.id;
 
   const getServiceName = (serviceId: number | string) => {
     if (!services) return "Carregando...";
@@ -237,7 +278,15 @@ export default function AppointmentsManagement() {
                       <div className="text-xs text-blue-600">👤 {getProfessionalName(appointment.professionalId)}</div>
                     )}
                     <div><span className="font-medium">Data:</span> {formatDate(appointment.date)}</div>
-                    <div><span className="font-medium">Horário:</span> {appointment.time}</div>
+                    <div className="flex items-center gap-2">
+                      <span><span className="font-medium">Horário:</span> {appointment.time}</span>
+                        {appointment.id === nextPendingAppointmentId && (
+                          <span className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800 shadow-sm">
+                            <Clock className="mr-1 h-3 w-3" />
+                            Próximo da fila
+                          </span>
+                        )}
+                    </div>
                   </div>
 
                   <div className="mt-3">
@@ -353,7 +402,17 @@ export default function AppointmentsManagement() {
                         )}
                       </td>
                       <td className="py-3 px-4">{formatDate(appointment.date)}</td>
-                      <td className="py-3 px-4">{appointment.time}</td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <span>{appointment.time}</span>
+                          {appointment.id === nextPendingAppointmentId && (
+                            <span className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide whitespace-nowrap text-amber-800 shadow-sm">
+                              <Clock className="mr-1 h-3 w-3" />
+                              Próximo da fila
+                            </span>
+                          )}
+                        </div>
+                      </td>
                       <td className="py-3 px-4">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                           appointment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :

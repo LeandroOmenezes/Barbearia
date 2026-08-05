@@ -1473,7 +1473,48 @@ export class DatabaseStorage implements IStorage {
 
   // Appointments
   async getAppointments(): Promise<Appointment[]> {
-    return await db.select().from(appointments).orderBy(desc(appointments.createdAt));
+    const statusPriority = sql<number>`
+      case
+        when ${appointments.status} = 'pending' then 0
+        when ${appointments.status} = 'confirmed' then 1
+        when ${appointments.status} = 'completed' then 2
+        when ${appointments.status} = 'cancelled' then 3
+        else 4
+      end
+    `;
+
+    const appointmentDateTime = sql<Date>`
+      (${appointments.date}::text || ' ' || ${appointments.time})::timestamp
+    `;
+
+    const isPastAppointment = sql<number>`
+      case
+        when ${appointmentDateTime} < now() then 1
+        else 0
+      end
+    `;
+
+    const futureDateTimeOrder = sql<Date | null>`
+      case
+        when ${appointmentDateTime} >= now() then ${appointmentDateTime}
+        else null
+      end
+    `;
+
+    const pastDateTimeOrder = sql<Date | null>`
+      case
+        when ${appointmentDateTime} < now() then ${appointmentDateTime}
+        else null
+      end
+    `;
+
+    return await db.select().from(appointments).orderBy(
+      statusPriority,
+      isPastAppointment,
+      futureDateTimeOrder,
+      desc(pastDateTimeOrder),
+      desc(appointments.createdAt),
+    );
   }
 
   async getAppointmentById(id: number): Promise<Appointment | undefined> {
@@ -1959,9 +2000,50 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAppointmentsByProfessionalId(professionalId: number): Promise<Appointment[]> {
+    const statusPriority = sql<number>`
+      case
+        when ${appointments.status} = 'pending' then 0
+        when ${appointments.status} = 'confirmed' then 1
+        when ${appointments.status} = 'completed' then 2
+        when ${appointments.status} = 'cancelled' then 3
+        else 4
+      end
+    `;
+
+    const appointmentDateTime = sql<Date>`
+      (${appointments.date}::text || ' ' || ${appointments.time})::timestamp
+    `;
+
+    const isPastAppointment = sql<number>`
+      case
+        when ${appointmentDateTime} < now() then 1
+        else 0
+      end
+    `;
+
+    const futureDateTimeOrder = sql<Date | null>`
+      case
+        when ${appointmentDateTime} >= now() then ${appointmentDateTime}
+        else null
+      end
+    `;
+
+    const pastDateTimeOrder = sql<Date | null>`
+      case
+        when ${appointmentDateTime} < now() then ${appointmentDateTime}
+        else null
+      end
+    `;
+
     return db.select().from(appointments)
       .where(eq(appointments.professionalId, professionalId))
-      .orderBy(desc(appointments.createdAt));
+      .orderBy(
+        statusPriority,
+        isPastAppointment,
+        futureDateTimeOrder,
+        desc(pastDateTimeOrder),
+        desc(appointments.createdAt),
+      );
   }
 
   async getUnseenCountForProfessional(professionalId: number): Promise<number> {
