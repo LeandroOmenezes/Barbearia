@@ -1,3 +1,4 @@
+import { randomBytes } from "crypto";
 import { 
   users, categories, services, priceItems, appointments, reviews, sales,
   banner, footer, siteConfig, reviewComments, commentLikes, reviewLikes,
@@ -248,22 +249,36 @@ export class MemStorage implements IStorage {
       // Import the hashPassword function
       const { hashPassword } = await import("./auth");
 
+      const initialAdminUsername = process.env.ADMIN_INITIAL_USERNAME || "lleandro.m32@gmail.com";
+      const initialAdminPassword = process.env.ADMIN_INITIAL_PASSWORD;
+
       // Check if admin user already exists
       const existingAdmin = await this.getUserByUsername(
-        "lleandro.m32@gmail.com",
+        initialAdminUsername,
       );
 
       if (!existingAdmin) {
+        if (process.env.NODE_ENV === "production" && !initialAdminPassword) {
+          console.warn("Skipping admin seed in production because ADMIN_INITIAL_PASSWORD is not set.");
+          return;
+        }
+
+        const passwordToUse = initialAdminPassword || randomBytes(16).toString("base64url");
+
         // Create admin user
         await this.createUser({
-          username: "lleandro.m32@gmail.com",
-          password: await hashPassword("admin"),
+          username: initialAdminUsername,
+          password: await hashPassword(passwordToUse),
           name: "Leandro Menezes",
           phone: "11900000000",
-          email: "lleandro.m32@gmail.com",
+          email: initialAdminUsername,
           isAdmin: true,
           isMaster: true,
         });
+
+        if (!initialAdminPassword && process.env.NODE_ENV !== "production") {
+          console.warn(`Admin seed created with a generated temporary password for ${initialAdminUsername}.`);
+        }
         
       }
     } catch (error) {

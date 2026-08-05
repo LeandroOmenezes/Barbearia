@@ -13,13 +13,20 @@ async function takeScreenshot(page, url, waitFor = 2000) {
 }
 
 async function loginAsAdmin(page) {
+  const adminEmail = process.env.DEMO_ADMIN_EMAIL;
+  const adminPassword = process.env.DEMO_ADMIN_PASSWORD;
+
+  if (!adminEmail || !adminPassword) {
+    throw new Error('Set DEMO_ADMIN_EMAIL and DEMO_ADMIN_PASSWORD before running this script.');
+  }
+
   await page.goto(`${BASE_URL}/auth`, { waitUntil: 'networkidle2' });
   await new Promise(r => setTimeout(r, 1500));
 
   // Fill login form
-  await page.type('input[type="text"], input[name="username"]', 'admin');
+  await page.type('input[type="text"], input[name="username"]', adminEmail);
   await new Promise(r => setTimeout(r, 300));
-  await page.type('input[type="password"]', 'admin123');
+  await page.type('input[type="password"]', adminPassword);
   await new Promise(r => setTimeout(r, 300));
 
   // Submit

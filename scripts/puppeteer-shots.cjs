@@ -69,10 +69,17 @@ async function run() {
 
   // Fill credentials
   const emailSel = 'input[type="email"], input[name="username"]';
+  const adminEmail = process.env.DEMO_ADMIN_EMAIL;
+  const adminPassword = process.env.DEMO_ADMIN_PASSWORD;
+
+  if (!adminEmail || !adminPassword) {
+    throw new Error('Set DEMO_ADMIN_EMAIL and DEMO_ADMIN_PASSWORD before running this script.');
+  }
+
   await page.waitForSelector(emailSel, { timeout: 5000 });
   await page.click(emailSel);
-  await page.type(emailSel, 'lleandro.m32@gmail.com');
-  await page.type('input[type="password"]', 'admin');
+  await page.type(emailSel, adminEmail);
+  await page.type('input[type="password"]', adminPassword);
   await shot('p07b_login_filled.jpg');
   await page.keyboard.press('Enter');
   await delay(2500);
