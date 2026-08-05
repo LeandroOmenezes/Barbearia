@@ -206,6 +206,7 @@ Resumo das entidades em shared/schema.ts:
 - Bloqueio por data inteira ou faixa de horario
 - Considera intervalo de atendimento e horario de almoco do profissional
 - Eventos SSE para atualizar disponibilidade em tempo real
+- Ordenacao operacional no painel por prioridade de status e proximidade do horario
 
 ### 5.4 Painel administrativo
 
@@ -218,6 +219,12 @@ Abas principais no dashboard:
 - Relatorio financeiro
 - Clientes
 - Usuarios do sistema
+
+Observacoes atuais de UX na tela de agendamentos:
+
+- Ordenacao da fila: pending, confirmed, completed, cancelled
+- Dentro do mesmo status: horarios futuros mais proximos primeiro; horarios passados depois (do mais recente para o mais antigo)
+- Destaque visual "Proximo da fila" no primeiro agendamento pendente futuro
 
 Observacao atual de UX na tela de usuarios:
 
@@ -551,6 +558,7 @@ SUPABASE_BUCKET=public
 - Uploads e exibicao de imagens suportam URL externa e fallback em base64.
 - Mudancas em endpoints exigem revisar query keys/invalidation no frontend.
 - Existem endpoints de diagnostico e teste; manter controle de exposicao em ambiente produtivo.
+- A fila de agendamentos possui ordenacao no backend e fallback no frontend para garantir consistencia visual mesmo com cache/transicao de dados.
 
 ---
 
@@ -586,3 +594,4 @@ SUPABASE_BUCKET=public
 
 - 2026-08-04: documentacao totalmente revisada com base no codigo atual (auth.ts, routes.ts, schema.ts e modulos do dashboard), incluindo permissoes por endpoint e regras de negocio de agendamento.
 - 2026-08-04: adicionada observacao da ordenacao hierarquica na tela de usuarios (Master > Admin > Profissional > Cliente).
+- 2026-08-04: atualizada regra de ordenacao de agendamentos no painel (prioridade por status + proximidade de horario) e registrado destaque visual "Proximo da fila" para o primeiro pendente futuro.
