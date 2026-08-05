@@ -20,6 +20,7 @@ export default function Header() {
   const previousUnseenCountRef = useRef<number | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioUnlockedRef = useRef(false);
+  const hasUserInteractedRef = useRef(false);
   const { user, logoutMutation } = useAuth();
   const { data: siteConfig } = useSiteConfig();
   const [location] = useLocation();
@@ -64,6 +65,7 @@ export default function Header() {
     };
 
     const onFirstInteraction = () => {
+      hasUserInteractedRef.current = true;
       void unlockAudio();
     };
 
@@ -80,6 +82,8 @@ export default function Header() {
 
   const playNotificationTone = async () => {
     if (typeof window === "undefined") return;
+    if (!hasUserInteractedRef.current) return;
+    if (!audioUnlockedRef.current) return;
 
     const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
     if (!AudioContextClass) return;
