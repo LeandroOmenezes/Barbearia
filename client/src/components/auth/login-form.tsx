@@ -31,6 +31,7 @@ export default function LoginForm({ onToggleForm }: LoginFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [allowCredentialInput, setAllowCredentialInput] = useState(false);
   
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
@@ -57,7 +58,7 @@ export default function LoginForm({ onToggleForm }: LoginFormProps) {
   return (
     <div className="space-y-6">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" autoComplete="off" data-lpignore="true">
           <FormField
             control={form.control}
             name="username"
@@ -67,10 +68,12 @@ export default function LoginForm({ onToggleForm }: LoginFormProps) {
                 <FormControl>
                   <Input 
                     type="email" 
-                    autoComplete="username"
+                    autoComplete="off"
                     autoCapitalize="none"
                     autoCorrect="off"
                     spellCheck={false}
+                    readOnly={!allowCredentialInput}
+                    onFocus={() => setAllowCredentialInput(true)}
                     placeholder="seu.email@exemplo.com" 
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
                     {...field} 
@@ -92,10 +95,12 @@ export default function LoginForm({ onToggleForm }: LoginFormProps) {
                     <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                     <Input 
                       type={showPassword ? "text" : "password"} 
-                      autoComplete="current-password"
+                      autoComplete="off"
                       autoCapitalize="none"
                       autoCorrect="off"
                       spellCheck={false}
+                      readOnly={!allowCredentialInput}
+                      onFocus={() => setAllowCredentialInput(true)}
                       placeholder="••••••••" 
                       className="w-full pl-9 pr-12 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
                       {...field} 
