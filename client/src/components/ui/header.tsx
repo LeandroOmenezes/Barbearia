@@ -3,24 +3,19 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useSiteConfig } from "@/hooks/use-site-config";
 import { Avatar } from "@/components/ui/avatar";
-import { Switch } from "@/components/ui/switch";
 import AdminMenu from "./admin-menu";
 import { AlertTriangle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { getSoundAlertEnabled, SOUND_ALERT_UPDATED_EVENT } from "@/lib/sound-alert";
 
-const SOUND_ALERT_STORAGE_KEY = "professional_sound_alert_enabled";
+const NOTIFICATION_TONE_PEAK_GAIN = 0.5;
+const NOTIFICATION_TONE_HARMONIC_GAIN = 0.32;
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [soundAlertEnabled, setSoundAlertEnabled] = useState(() => {
-    if (typeof window === "undefined") return true;
-    const saved = window.localStorage.getItem(SOUND_ALERT_STORAGE_KEY);
-    return saved === null ? true : saved === "true";
-  });
+  const [soundAlertEnabled, setSoundAlertEnabled] = useState(() => getSoundAlertEnabled());
   const previousUnseenCountRef = useRef<number | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
-  const audioUnlockedRef = useRef(false);
-  const hasUserInteractedRef = useRef(false);
   const { user, logoutMutation } = useAuth();
   const { data: siteConfig } = useSiteConfig();
   const [location] = useLocation();
@@ -29,15 +24,30 @@ export default function Header() {
   const { data: unseenData } = useQuery<{ count: number; isProfessional?: boolean }>({
     queryKey: ["/api/professional/unseen-count", currentUserId],
     enabled: !!currentUserId,
-    refetchInterval: 30000,
+    refetchInterval: 15000,
   });
   const unseenCount = unseenData?.count ?? 0;
   const isProfessional = unseenData?.isProfessional === true;
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    window.localStorage.setItem(SOUND_ALERT_STORAGE_KEY, String(soundAlertEnabled));
-  }, [soundAlertEnabled]);
+
+    const syncFromStorage = () => setSoundAlertEnabled(getSoundAlertEnabled());
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === null || event.key === "professional_sound_alert_enabled") {
+        syncFromStorage();
+      }
+    };
+
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener(SOUND_ALERT_UPDATED_EVENT, syncFromStorage);
+
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener(SOUND_ALERT_UPDATED_EVENT, syncFromStorage);
+    };
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -58,14 +68,12 @@ export default function Header() {
         if (ctx.state === "suspended") {
           await ctx.resume();
         }
-        audioUnlockedRef.current = ctx.state === "running";
       } catch {
-        audioUnlockedRef.current = false;
+        // Browsers may block resume until gesture; a new attempt happens on alert play.
       }
     };
 
     const onFirstInteraction = () => {
-      hasUserInteractedRef.current = true;
       void unlockAudio();
     };
 
@@ -82,8 +90,6 @@ export default function Header() {
 
   const playNotificationTone = async () => {
     if (typeof window === "undefined") return;
-    if (!hasUserInteractedRef.current) return;
-    if (!audioUnlockedRef.current) return;
 
     const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
     if (!AudioContextClass) return;
@@ -102,27 +108,49 @@ export default function Header() {
       const now = ctx.currentTime;
       const masterGain = ctx.createGain();
       masterGain.gain.setValueAtTime(0.0001, now);
-      masterGain.gain.exponentialRampToValueAtTime(0.12, now + 0.015);
-      masterGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.38);
+      masterGain.gain.exponentialRampToValueAtTime(NOTIFICATION_TONE_PEAK_GAIN, now + 0.03);
+      masterGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.86);
       masterGain.connect(ctx.destination);
 
-      const firstTone = ctx.createOscillator();
-      firstTone.type = "triangle";
-      firstTone.frequency.setValueAtTime(880, now);
-      firstTone.connect(masterGain);
-      firstTone.start(now);
-      firstTone.stop(now + 0.16);
+      const toneSteps = [
+        { frequency: 784, startOffset: 0, duration: 0.2 },
+        { frequency: 1047, startOffset: 0.24, duration: 0.2 },
+        { frequency: 1319, startOffset: 0.48, duration: 0.28 },
+      ];
 
-      const secondTone = ctx.createOscillator();
-      secondTone.type = "triangle";
-      secondTone.frequency.setValueAtTime(1175, now + 0.18);
-      secondTone.connect(masterGain);
-      secondTone.start(now + 0.18);
-      secondTone.stop(now + 0.36);
+      toneSteps.forEach(({ frequency, startOffset, duration }) => {
+        const mainOscillator = ctx.createOscillator();
+        const harmonicOscillator = ctx.createOscillator();
+        const noteGain = ctx.createGain();
+        const harmonicGain = ctx.createGain();
+        const noteStart = now + startOffset;
+        const noteEnd = noteStart + duration;
 
-      audioUnlockedRef.current = true;
+        mainOscillator.type = "triangle";
+        mainOscillator.frequency.setValueAtTime(frequency, noteStart);
+
+        harmonicOscillator.type = "sine";
+        harmonicOscillator.frequency.setValueAtTime(frequency * 2, noteStart);
+
+        noteGain.gain.setValueAtTime(0.0001, noteStart);
+        noteGain.gain.exponentialRampToValueAtTime(1, noteStart + 0.025);
+        noteGain.gain.exponentialRampToValueAtTime(0.0001, noteEnd);
+
+        harmonicGain.gain.setValueAtTime(0.0001, noteStart);
+        harmonicGain.gain.exponentialRampToValueAtTime(NOTIFICATION_TONE_HARMONIC_GAIN, noteStart + 0.02);
+        harmonicGain.gain.exponentialRampToValueAtTime(0.0001, noteEnd);
+
+        mainOscillator.connect(noteGain);
+        harmonicOscillator.connect(harmonicGain);
+        noteGain.connect(masterGain);
+        harmonicGain.connect(masterGain);
+        mainOscillator.start(noteStart);
+        mainOscillator.stop(noteEnd);
+        harmonicOscillator.start(noteStart);
+        harmonicOscillator.stop(noteEnd);
+      });
     } catch {
-      audioUnlockedRef.current = false;
+      // Keep silent failure to avoid noisy UI errors when autoplay policy blocks audio.
     }
   };
 
@@ -214,16 +242,6 @@ export default function Header() {
                   </span>
                 )}
               </Link>
-              {isProfessional && (
-                <div className="flex items-center gap-2 px-3 py-2 rounded-full border border-gray-200 bg-white">
-                  <span className="text-xs text-gray-600 font-medium">Som alerta</span>
-                  <Switch
-                    checked={soundAlertEnabled}
-                    onCheckedChange={setSoundAlertEnabled}
-                    aria-label="Ativar alerta sonoro de novos agendamentos"
-                  />
-                </div>
-              )}
               {user.isAdmin && <AdminMenu />}
               <button 
                 onClick={() => logoutMutation.mutate()}
@@ -280,16 +298,6 @@ export default function Header() {
               {user.isAdmin && (
                 <div className="py-2">
                   <AdminMenu />
-                </div>
-              )}
-              {isProfessional && (
-                <div className="flex items-center justify-between px-1 py-2">
-                  <span className="text-sm text-gray-700 font-medium">Som alerta</span>
-                  <Switch
-                    checked={soundAlertEnabled}
-                    onCheckedChange={setSoundAlertEnabled}
-                    aria-label="Ativar alerta sonoro de novos agendamentos"
-                  />
                 </div>
               )}
               <button 

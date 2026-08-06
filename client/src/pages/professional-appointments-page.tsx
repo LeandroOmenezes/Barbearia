@@ -9,8 +9,10 @@ import Footer from "@/components/ui/footer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 import { Users, CalendarDays, Clock, Phone, Mail, FileText, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 import type { Appointment, Service } from "@shared/schema";
+import { getSoundAlertEnabled, setSoundAlertEnabled } from "@/lib/sound-alert";
 
 const STATUS_MAP: Record<string, { label: string; color: string; icon: any }> = {
   pending:   { label: "Pendente",   color: "bg-amber-100 text-amber-800 border-amber-200",  icon: AlertCircle  },
@@ -30,6 +32,7 @@ export default function ProfessionalAppointmentsPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [markAllJustSeen, setMarkAllJustSeen] = useState(false);
+  const [soundAlertEnabled, setSoundAlertEnabledState] = useState(() => getSoundAlertEnabled());
 
   const { data: prof, isLoading: loadingProf } = useQuery<{ id: number; name: string; photoBase64?: string; photoMimeType?: string }>({
     queryKey: ["/api/professional/me"],
@@ -38,6 +41,7 @@ export default function ProfessionalAppointmentsPage() {
   const { data: appointments = [], isLoading: loadingAppts } = useQuery<Appointment[]>({
     queryKey: ["/api/professional/appointments"],
     enabled: !!prof,
+    refetchInterval: 15000,
   });
 
   const { data: services = [] } = useQuery<Service[]>({
@@ -103,6 +107,11 @@ export default function ProfessionalAppointmentsPage() {
   };
 
   const actionButtonClass = "border-primary/40 text-primary font-semibold bg-primary/5 hover:bg-primary hover:text-white hover:border-primary shadow-sm transition-colors focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-1 disabled:opacity-60 disabled:cursor-not-allowed";
+
+  const handleSoundAlertChange = (enabled: boolean) => {
+    setSoundAlertEnabledState(enabled);
+    setSoundAlertEnabled(enabled);
+  };
 
   const upcoming = appointments.filter(a => a.status !== "cancelled" && new Date(`${a.date}T${a.time}`) >= new Date());
   const past = appointments.filter(a => a.status === "cancelled" || new Date(`${a.date}T${a.time}`) < new Date());
@@ -248,23 +257,37 @@ export default function ProfessionalAppointmentsPage() {
         </div>
 
         <div className="container mx-auto px-4 py-8 space-y-8">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-800">Solicitações recebidas</h2>
-              <p className="text-sm text-gray-500">Veja os pedidos dos clientes e marque como visto quando revisar.</p>
+          <div className="rounded-lg border border-gray-200 bg-white p-3.5 sm:p-4">
+            <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+              <div className="space-y-1 lg:max-w-[540px]">
+                <h2 className="text-lg font-semibold text-gray-800">Solicitações recebidas</h2>
+                <p className="text-[13px] text-gray-500">Veja os pedidos dos clientes e marque como visto quando revisar.</p>
+              </div>
+
+              <div className="flex w-full flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-end sm:gap-3.5 lg:ml-auto lg:w-auto lg:shrink-0 lg:pt-0.5">
+                <div className="flex h-9 self-end items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3 sm:self-auto">
+                  <span className="text-[11px] text-gray-500 font-medium">Som alerta</span>
+                  <Switch
+                    checked={soundAlertEnabled}
+                    onCheckedChange={handleSoundAlertChange}
+                    aria-label="Ativar alerta sonoro de novos agendamentos"
+                  />
+                </div>
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className={`h-9 w-full sm:min-w-[210px] sm:w-auto ${actionButtonClass} ${markAllJustSeen ? "border-green-500 bg-green-600 text-white hover:bg-green-600 hover:text-white" : ""}`}
+                  onClick={() => markAllSeenMutation.mutate()}
+                  disabled={markAllSeenMutation.isPending || markAllJustSeen}
+                >
+                  <span className="inline-flex items-center gap-1.5">
+                    {markAllJustSeen && <CheckCircle2 className="h-4 w-4" />}
+                    {markAllSeenMutation.isPending ? "Marcando..." : markAllJustSeen ? "Todos vistos" : "Marcar novos como vistos"}
+                  </span>
+                </Button>
+              </div>
             </div>
-            <Button
-              size="sm"
-              variant="outline"
-              className={`w-full sm:w-auto ${actionButtonClass} ${markAllJustSeen ? "border-green-500 bg-green-600 text-white hover:bg-green-600 hover:text-white" : ""}`}
-              onClick={() => markAllSeenMutation.mutate()}
-              disabled={markAllSeenMutation.isPending || markAllJustSeen}
-            >
-              <span className="inline-flex items-center gap-1.5">
-                {markAllJustSeen && <CheckCircle2 className="h-4 w-4" />}
-                {markAllSeenMutation.isPending ? "Marcando..." : markAllJustSeen ? "Todos vistos" : "Marcar novos como vistos"}
-              </span>
-            </Button>
           </div>
 
           {loadingAppts ? (
