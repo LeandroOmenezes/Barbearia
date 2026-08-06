@@ -198,6 +198,10 @@ export default function LoginForm({ onToggleForm }: LoginFormProps) {
           </>
         )}
       </Button>
+
+      <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-800">
+        Entrou primeiro com Google? Para acessar com email e senha, use "Esqueci minha senha" e crie sua senha.
+      </div>
       
       <div className="text-center mt-4 p-3 bg-gray-50 rounded-lg">
         <p className="text-sm text-gray-600">

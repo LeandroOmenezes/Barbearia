@@ -137,7 +137,7 @@ export function setupAuth(app: Express) {
 
           const validPassword = await comparePasswords(password, user.password || "");
           if (!validPassword) {
-            return done(null, false, { message: "Email ou senha inválidos" });
+            return done(null, false, { message: "Senha inválida. Se sua conta foi criada com Google, use 'Esqueci minha senha' para definir uma senha." });
           }
 
           return done(null, user);
@@ -264,7 +264,7 @@ export function setupAuth(app: Express) {
       
       const existingUser = await storage.getUserByUsername(username);
       if (existingUser) {
-        return res.status(400).json({ message: "Já existe uma conta com este email" });
+        return res.status(400).json({ message: "Este email já possui cadastro. Faça login ou use 'Esqueci minha senha' para definir/alterar sua senha." });
       }
 
       const user = await storage.createUser({
@@ -285,7 +285,7 @@ export function setupAuth(app: Express) {
       console.error("[REGISTER ERROR]", error?.message || error);
       const msg = error?.message || "";
       if (msg.includes("unique") || msg.includes("duplicate")) {
-        return res.status(400).json({ message: "Já existe uma conta com este email" });
+        return res.status(400).json({ message: "Este email já possui cadastro. Faça login ou use 'Esqueci minha senha' para definir/alterar sua senha." });
       }
       res.status(500).json({ message: "Erro interno do servidor: " + (error?.message || "desconhecido") });
     }
@@ -295,7 +295,9 @@ export function setupAuth(app: Express) {
     const rememberMe = req.body?.rememberMe === true;
     passport.authenticate("local", (err: Error | null, user: Express.User | false | null, info: any) => {
       if (err) return next(err);
-      if (!user) return res.status(401).json({ message: "Email ou senha inválidos" });
+      if (!user) {
+        return res.status(401).json({ message: info?.message || "Email ou senha inválidos" });
+      }
       
       req.login(user, (err) => {
         if (err) return next(err);

@@ -375,7 +375,7 @@ export default function AppointmentsManagement() {
                     <th className="py-3 px-4 text-left">Data</th>
                     <th className="py-3 px-4 text-left">Horário</th>
                     <th className="py-3 px-4 text-left">Status</th>
-                    <th className="py-3 px-4 text-left">Ações</th>
+                    <th className="py-3 px-4 text-left whitespace-nowrap">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -403,7 +403,7 @@ export default function AppointmentsManagement() {
                       </td>
                       <td className="py-3 px-4">{formatDate(appointment.date)}</td>
                       <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-col items-start gap-1">
                           <span>{appointment.time}</span>
                           {appointment.id === nextPendingAppointmentId && (
                             <span className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide whitespace-nowrap text-amber-800 shadow-sm">
@@ -426,8 +426,8 @@ export default function AppointmentsManagement() {
                           'Cancelado'}
                         </span>
                       </td>
-                      <td className="py-3 px-4">
-                        <div className="flex flex-wrap gap-2">
+                      <td className="py-3 px-4 whitespace-nowrap min-w-[210px]">
+                        <div className="flex flex-nowrap gap-2">
                           {appointment.status === 'pending' && (
                             <>
                               <Button
